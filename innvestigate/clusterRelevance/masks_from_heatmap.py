@@ -44,15 +44,16 @@ def retrieve(a, x, size):
 
     masks_resized = []
     for ret in masks:
-        ret = np.resize(ret,(size, size))
         ret = np.asarray(ret, dtype=np.uint8).astype(np.float32)
         if ret.ndim == 2:
-            ret.resize((size, size, 1))
+            ret = np.expand_dims(ret, -1)
             masks_resized.append(np.expand_dims(np.repeat(ret, 3, axis=-1), 0))
 
     top_6 = masks_resized[: 6]
 
     masks_3D = random_clusters.random_clusters(x, top_6)
 
+    masks = masks[: 6]
 
-    return masks_3D
+
+    return masks, masks_3D

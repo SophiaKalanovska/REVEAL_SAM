@@ -66,14 +66,14 @@ pip3 install matplotlib
 
 The library's tests can be executed via `pytest`. The easiest way to do reproducible development on iNNvestigate is to install all dev dependencies via [Poetry](https://python-poetry.org):
 ```bash
-git clone https://github.com/albermax/innvestigate.git
+git clone https://github.com/SophiaKalanovska/REVEAL_SAM.git
 brew install poetry
 cd REVEAL
 
 poetry install
 poetry run pytest
 
-poetry run python /Users/sophiakalanovska/Documents/REVEAL/examples/readme_code_snippet.py
+poetry run python path/REVEAL_SAM/examples/readme_code_snippet.py
 ```
 
 ## Usage and Examples

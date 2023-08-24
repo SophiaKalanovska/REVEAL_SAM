@@ -5,6 +5,7 @@ from __future__ import \
     absolute_import, print_function, division, unicode_literals
 
 from importlib.machinery import SourceFileLoader
+import copy
 
 # from clusterRelevance import illustrate_clusters
 # from clusterRelevance import masks_from_heatmap
@@ -77,7 +78,7 @@ if __name__ == "__main__":
     mask_generator = SamAutomaticMaskGenerator(sam)
     IMAGE_PATH = base_dir + "/images/"+ image_name
 
-    image_bgr = cv2.imread(IMAGE_PATH)
+    image_bgr = np.asarray(image_new, dtype=np.uint8)
     image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
     result = mask_generator.generate(image_rgb)
 
@@ -85,7 +86,7 @@ if __name__ == "__main__":
 
     mask_annotator = sv.MaskAnnotator()
     detections = sv.Detections.from_sam(result)
-    annotated_image = mask_annotator.annotate(image_bgr, detections)
+    annotated_image = mask_annotator.annotate(copy.copy(image_rgb), detections)
 
     model_call = vgg16
     # model_call = vgg19
@@ -100,7 +101,7 @@ if __name__ == "__main__":
     model = innvestigate.model_wo_softmax(model)
     x = preprocess(image[None])
 
-    masks_from_heatmap3D = innvestigate.masks_from_heatmap.retrieve(result, x, image_size)
+    masks, masks_from_heatmap3D = innvestigate.masks_from_heatmap.retrieve(result, x, image_size)
 
 
     # Get model
@@ -138,5 +139,6 @@ if __name__ == "__main__":
     relevance = analyzer.analyze(x)
     print("--- %s minutes ---" % ((time.time() - start_time) / 60))
 
-    innvestigate.illustrate_clusters.mask_to_input_relevance_of_mask(relevance, masks_from_heatmap3D, label = predictions[0][0][1], scene = x)
+    illustrate = innvestigate.illustrate_clusters.Illustrate()
+    illustrate.mask_to_input_relevance_of_mask(relevance, masks_from_heatmap3D, label = predictions[0][0][1], scene = copy.copy(image_rgb), detections= detections, masks = masks)
 
