@@ -68,25 +68,25 @@ if __name__ == "__main__":
         os.path.join(base_dir, "images", image_name), image_size)
     image_new = image[:, :, :3]
 
-    CHECKPOINT_PATH = "sam_vit_h_4b8939.pth"
-    DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    MODEL_TYPE = "vit_h"
+    # CHECKPOINT_PATH = "sam_vit_h_4b8939.pth"
+    # DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    # MODEL_TYPE = "vit_h"
 
-    sam = sam_model_registry[MODEL_TYPE](checkpoint=CHECKPOINT_PATH)
-    sam.to(device=DEVICE)
+    # sam = sam_model_registry[MODEL_TYPE](checkpoint=CHECKPOINT_PATH)
+    # sam.to(device=DEVICE)
 
-    mask_generator = SamAutomaticMaskGenerator(sam)
-    IMAGE_PATH = base_dir + "/images/"+ image_name
+    # mask_generator = SamAutomaticMaskGenerator(sam)
+    # IMAGE_PATH = base_dir + "/images/"+ image_name
 
-    image_bgr = np.asarray(image_new, dtype=np.uint8)
-    image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
-    result = mask_generator.generate(image_rgb)
+    # image_bgr = np.asarray(image_new, dtype=np.uint8)
+    # image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+    # result = mask_generator.generate(image_rgb)
 
 
 
-    mask_annotator = sv.MaskAnnotator()
-    detections = sv.Detections.from_sam(result)
-    annotated_image = mask_annotator.annotate(copy.copy(image_rgb), detections)
+    # mask_annotator = sv.MaskAnnotator()
+    # detections = sv.Detections.from_sam(result)
+    # annotated_image = mask_annotator.annotate(copy.copy(image_rgb), detections)
 
     model_call = vgg16
     # model_call = vgg19
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     model = innvestigate.model_wo_softmax(model)
     x = preprocess(image[None])
 
-    masks, masks_from_heatmap3D = innvestigate.masks_from_heatmap.retrieve(result, x, image_size)
+    # masks, masks_from_heatmap3D = innvestigate.masks_from_heatmap.retrieve(result, x, image_size)
 
 
     # Get model
@@ -130,6 +130,8 @@ if __name__ == "__main__":
     # plt.savefig(image_name + "_heatmap.png")
     # plt.show()
 
+    masks, masks_from_heatmap3D = innvestigate.masks_from_heatmap.retrieve_pixels(a, x, image_size)
+
     
 
     analyzer = innvestigate.create_analyzer("reveal.alpha_2_beta_1", model, **{"masks": masks_from_heatmap3D})
@@ -140,5 +142,6 @@ if __name__ == "__main__":
     print("--- %s minutes ---" % ((time.time() - start_time) / 60))
 
     illustrate = innvestigate.illustrate_clusters.Illustrate()
-    illustrate.mask_to_input_relevance_of_mask(relevance, masks_from_heatmap3D, label = predictions[0][0][1], scene = copy.copy(image_rgb), detections= detections, masks = masks)
+    # illustrate.mask_to_input_relevance_of_mask(relevance, masks_from_heatmap3D, label = predictions[0][0][1], scene_colour = copy.copy(image_rgb), detections= detections, masks = masks)
+    illustrate.mask_to_input_relevance_of_pixels(relevance, masks_from_heatmap3D, label = predictions[0][0][1])
 

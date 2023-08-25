@@ -414,6 +414,11 @@ class LessThanZero(klayers.Layer):
     def call(self, inputs: Tensor, *_args, **_kwargs) -> Tensor:
         return kbackend.less(inputs, kbackend.constant(0))
     
+class LessThan(klayers.Layer):
+    def call(self, inputs: Tensor, *_args, **_kwargs) -> Tensor:
+        a, b = inputs
+        return kbackend.less(a, b)    
+    
 class MoreThanZero(klayers.Layer):    
     def call(self, inputs: Tensor, *_args, **_kwargs) -> Tensor:
         return kbackend.less(kbackend.constant(0), inputs)    

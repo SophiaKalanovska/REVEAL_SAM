@@ -5,7 +5,7 @@ import seaborn
 import matplotlib.pyplot as plt
 
 
-def jenks_breaks(activations, numberOfBreaks, image_size, n, cutoff):
+def jenks_breaks(activations, numberOfBreaks, image_size, n, cutoff, x):
     result = activations.flatten()
     image = x
     quaters = np.floor(result.size / n)
@@ -38,9 +38,12 @@ def jenks_breaks(activations, numberOfBreaks, image_size, n, cutoff):
             x += 1
             for r in range(n):
                 if y >= rows_down*(r) and y <= rows_down*(r+1):
-                    if abs(j) > innerbreaks[r][-2] and abs(j) > top_nity:
+                    if abs(j) > innerbreaks[r][-3] and abs(j) > 0.137:
+                    # if abs(j) > innerbreaks[r][-2] and abs(j) > top_nity:
                     # if abs(j) > innerbreaks[r][-3] and abs(j) > 0.012:
-                        activation_ranges.append((x , image_size - y, image[0][y][x][0] / 3, image[0][y][x][1] / 3, image[0][y][x][2]/ 3))
+                        # activation_ranges.append((x , image_size - y, image[0][y][x][0] / 3, image[0][y][x][1] / 3, image[0][y][x][2]/ 3))
+                        # activation_ranges.append((x , image_size - y, np.dot(image[0][y][x][...,:3], [0.2989, 0.5870, 0.1140])))
+                        activation_ranges.append((x , image_size - y, j*460))
                         continue
                         # activation.append(j)
                     #     continue

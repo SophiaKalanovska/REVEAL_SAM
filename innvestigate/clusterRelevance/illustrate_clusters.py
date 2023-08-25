@@ -6,6 +6,8 @@ import tensorflow as tf
 from typing import List, Optional, Union
 from supervision.draw.color import Color, ColorPalette
 import copy
+import skimage.color as skc
+# import sk.color.gray2rgb
 import supervision as sv
 import cv2
 
@@ -26,7 +28,8 @@ class Illustrate:
 
 
 
-        self.primes = np.array([ 3,   5,    11,  13,  17,  19,  23,  29,  31,  37, 41, 43])
+        self.primes = np.array([ 3,   5,  11,  13,  17,  19,  23,  29,  31,  37, 41, 43])
+    
 
 
     # self.color: Union[Color, ColorPalette] = color
@@ -54,9 +57,13 @@ class Illustrate:
                 # 43: np.array([255, 180, 10]),
                 # -999: np.array([255, 180, 255]),
                 } # light red
+    def rgb2gray(self, rgb):
 
-    def mask_to_input_relevance_of_mask(self, relevance, masks_from_heatmap3D, label, scene, detections, masks):
-        opacity = 0.5
+        grey = np.dot(rgb[...,:3], [0.2989, 0.5870, 0.1140])
+        return skc.gray2rgb(grey)
+    
+    def mask_to_input_relevance_of_mask(self, relevance, masks_from_heatmap3D, label, scene_colour, detections, masks):
+        opacity = 0.6
         print(relevance)
         full_relevance = relevance[-1]
         regions_relevance = relevance[-2]
@@ -64,47 +71,18 @@ class Illustrate:
         # masks = masks_from_heatmap3D[:-2]
 
         detections = detections[: 6]
-        image = copy.copy(scene)
+        image = copy.copy(scene_colour)
+        scene = self.rgb2gray(copy.copy(scene_colour))
         
 
         
         
         relevances_sorted, masks_with_ones_sorted = zip(*sorted(zip(relevances_clusters, masks), key = lambda x:x[0], reverse=True))
 
-        # masked_heat_show = np.zeros_like(masks_with_ones_sorted[0])
+
         custom_lines = []
 
-
-        # for i in np.flip(np.argsort(detections.area)):
-        #     class_id = (
-        #         detections.class_id[i] if detections.class_id is not None else None
-        #     )
-        #     idx = class_id if class_id is not None else i
-        #     color = (
-        #         self.color.by_idx(idx)
-        #         if isinstance(self.color, ColorPalette)
-        #         else self.color
-        #     )
-
-        #     mask = detections.mask[i]
-        #     colored_mask = np.zeros_like(x, dtype=np.uint8)
-        #     colored_mask[:] = color.as_bgr()
-
-        #     scene = np.where(
-        #         np.expand_dims(mask, axis=-1),
-        #         np.uint8(opacity * colored_mask + (1 - opacity) * scene),
-        #         scene,
-        #     )
         for i in np.flip(np.argsort(detections.area)):
-                # class_id = (
-                #     detections.class_id[i] if detections.class_id is not None else None
-                # )
-                # idx = class_id if class_id is not None else i
-                # color = (
-                #     self.color.by_idx(idx)
-                #     if isinstance(self.color, ColorPalette)
-                #     else self.color
-                # )
 
                 relevance = self.primes[i]
 
@@ -122,70 +100,10 @@ class Illustrate:
 
                 custom_lines.append(Line2D([0], [0], marker='o', color='w', label='Scatter',
                     markerfacecolor= '#%02x%02x%02x' % tuple(color.as_rgb()), markersize=10))
-        
-        # for i in range(len(masks_with_ones_sorted)):
-        #     if relevances_sorted[i] > 0:
-        #         mask = masks_with_ones_sorted[i]
-        #         relevance = primes[i]
-        #         # masked_heat_show = masked_heat_show * np.logical_not(mask)
-        #         # masked_heat_show += relevance * mask
-        #         # custom_lines.append(Line2D([0], [0], color= '#%02x%02x%02x' % tuple(color_map[relevance]), lw=1))
-        #         custom_lines.append(Line2D([0], [0], marker='o', color='w', label='Scatter',
-        #             markerfacecolor= '#%02x%02x%02x' % tuple(color_map[relevance]), markersize=10))
-        #         color = Color(color_map[relevance][0], color_map[relevance][1], color_map[relevance][2])
-        #         colored_mask = np.zeros_like(scene, dtype=np.uint8)
-        #         colored_mask[:] = color.as_bgr()
 
-        #         scene = np.where(
-        #             mask,
-        #             np.uint8(opacity * colored_mask + (1 - opacity) * scene),
-        #             scene,
-        #         )
-        #     else:
-        #         index = i - len(masks_with_ones_sorted)
-        #         mask = masks_with_ones_sorted[index]
-        #         relevance = primes[index]
-        #         # masked_heat_show = masked_heat_show * np.logical_not(mask)
-        #         # masked_heat_show += relevance * mask
-        #         # custom_lines.append(Line2D([0], [0], color= '#%02x%02x%02x' % tuple(color_map[relevance]), lw=1))
-        #         custom_lines.append(Line2D([0], [0], marker='o', color='w', label='Scatter',
-        #             markerfacecolor= '#%02x%02x%02x' % tuple(color_map[relevance]), markersize=10))
-                
-        #         color = Color(color_map[relevance][0], color_map[relevance][1], color_map[relevance][2])
-        #         colored_mask = np.zeros_like(scene, dtype=np.uint8)
-        #         colored_mask[:] = color.as_bgr()
-
-        #         scene = np.where(
-        #             mask,
-        #             np.uint8(opacity * colored_mask + (1 - opacity) * scene),
-        #             scene,
-        #         )
-
-            # plt.imshow(masks[i], color=color_map[relevance * mask],
-            #           ax=ax,
-            #           label=mask_relevances[i])
-
-        # arr = masked_heat_show[:,:,:, 0][0]
-        # relevances_sorted = np.expand_dims(relevances_sorted, -1)
-
-        # data_3d = np.ndarray(shape=(arr.shape[0], arr.shape[1], 3), dtype=int)
-
-        # for i in range(0, arr.shape[0]):
-        #     for j in range(0, arr.shape[1]):
-        #         data_3d[i][j] = color_map[arr[i][j]]
-
-        # plt.imshow(data_3d)
-        # # plt.legend(handles=scatter.legend_elements()[0],
-        # #            title="relevances")
-        # plt.savefig("hey" + "_masked_heat.png")
-        # plt.show()
-
-        # relevance_percent_out_of_full = ["%.2f%%" % x  for x in np.squeeze(np.around(relevances_sorted / full_relevance * 100, decimals=2), 1)]
-        # relevance_percent_out_of_regions = ["%.2f%%" % x  for x in np.squeeze(np.around(relevances_sorted / regions_relevance * 100, decimals=2), 1)]
-        
         relevances = np.around(relevances_sorted, decimals=3)
 
-        images=[image, scene]
+        images=[image, scene.astype("uint8")]
         nrows, ncols = (1, 3)
 
         if len(images) > nrows * ncols:
@@ -217,34 +135,61 @@ class Illustrate:
         plt.setp(l.get_title(), multialignment='center')
         plt.show()
 
-        # fig, ax = plt.subplots()
-        # plt.tick_params(bottom=False, left=False)
-        # ax.axes.yaxis.set_ticklabels([])
-        # ax.axes.xaxis.set_ticklabels([])
-        # box = ax.get_position()
-        # ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-        # l = ax.legend(custom_lines, relevances, title="Relevance of label \n " + label + "\n out of " + r"$\bf{" "%.3f" % full_relevance + "}$" "\n",
-        #             loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True, fontsize=11,
-        #             title_fontsize=11, alignment="center")
+    def mask_to_input_relevance_of_pixels(self, relevance, masks_from_heatmap3D, label): 
+        print(relevance)
+        full_relevance = relevance[-1]
+        regions_relevance = relevance[-2]
+        relevances_clusters = relevance[:-2]
+        masks = masks_from_heatmap3D[:-2]
+        
+        relevances_sorted, masks_with_ones_sorted = zip(*sorted(zip(relevances_clusters, masks), key = lambda x:x[0], reverse=True))
 
-        # plt.setp(l.get_title(), multialignment='center')
-        # plt.imshow(scene)
-        # plt.show()
+        masked_heat_show = np.zeros_like(masks_with_ones_sorted[0])
+        custom_lines = []
+        for i in range(len(masks_with_ones_sorted)):
+            if relevances_sorted[i] > 0:
+                mask = masks_with_ones_sorted[i]
+                relevance = self.primes[i]
+                masked_heat_show = masked_heat_show * np.logical_not(mask)
+                masked_heat_show += relevance * mask
+                # custom_lines.append(Line2D([0], [0], color= '#%02x%02x%02x' % tuple(color_map[relevance]), lw=1))
+                custom_lines.append(Line2D([0], [0], marker='o', color='w', label='Scatter',
+                    markerfacecolor= '#%02x%02x%02x' % tuple(self.color_map[relevance]), markersize=10))
+            else:
+                index = i - len(masks_with_ones_sorted)
+                mask = masks_with_ones_sorted[index]
+                relevance = self.primes[index]
+                masked_heat_show = masked_heat_show * np.logical_not(mask)
+                masked_heat_show += relevance * mask
+                # custom_lines.append(Line2D([0], [0], color= '#%02x%02x%02x' % tuple(color_map[relevance]), lw=1))
+                custom_lines.append(Line2D([0], [0], marker='o', color='w', label='Scatter',
+                    markerfacecolor= '#%02x%02x%02x' % tuple(self.color_map[relevance]), markersize=10))
 
-            # fig, ax = plt.subplots()
-        # plt.tick_params(bottom=False, left=False)
-        # ax.axes.yaxis.set_ticklabels([])
-        # ax.axes.xaxis.set_ticklabels([])
-        # l = ax.legend(custom_lines, relevance_percent_out_of_full, title="Contribution to \n classification\n")
-        # plt.setp(l.get_title(), multialignment='center')
-        # plt.imshow(data_3d)
-        # plt.show()
-        #
-        # fig, ax = plt.subplots()
-        # plt.tick_params(bottom=False, left=False)
-        # ax.axes.yaxis.set_ticklabels([])
-        # ax.axes.xaxis.set_ticklabels([])
-        # l = ax.legend(custom_lines, relevance_percent_out_of_regions, title="Relative \n contribution\n")
-        # plt.setp(l.get_title(), multialignment='center')
-        # plt.imshow(data_3d)
-        # plt.show()
+            # plt.imshow(masks[i], color=color_map[relevance * mask],
+            #           ax=ax,
+            #           label=mask_relevances[i])
+
+        arr = masked_heat_show[:,:,:, 0][0]
+        relevances_sorted = np.expand_dims(relevances_sorted, -1)
+
+        data_3d = np.ndarray(shape=(arr.shape[0], arr.shape[1], 3), dtype=int)
+
+        for i in range(0, arr.shape[0]):
+            for j in range(0, arr.shape[1]):
+                data_3d[i][j] = self.color_map[arr[i][j]]
+
+        relevances = np.squeeze(np.around(relevances_sorted, decimals=3), 1) 
+
+        fig, ax = plt.subplots()
+        plt.tick_params(bottom=False, left=False)
+        ax.axes.yaxis.set_ticklabels([])
+        ax.axes.xaxis.set_ticklabels([])
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+        l = ax.legend(custom_lines, relevances, title="Relevance of label \n " + label + "\n out of " + r"$\bf{" "%.3f" % full_relevance + "}$" "\n",
+                    loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True, fontsize=11,
+                    title_fontsize=11, alignment="center")
+
+        plt.setp(l.get_title(), multialignment='center')
+        plt.imshow(data_3d)
+        plt.show()              

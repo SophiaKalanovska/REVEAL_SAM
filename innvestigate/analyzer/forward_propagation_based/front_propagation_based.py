@@ -146,26 +146,26 @@ class BatchNormalizationRevealLayer(igraph.ReverseMappingBase):
             casted_mask_the_zeros)
 
 
-        contribution_features = ilayers.Split(num_or_size_splits=_reverse_state["masks_size"])(Rs)
+        # contribution_features = ilayers.Split(num_or_size_splits=_reverse_state["masks_size"])(Rs)
 
-        std = ilayers.Squareroot_the_variance(eps = self.eps)(self._var)
+        # std = ilayers.Squareroot_the_variance(eps = self.eps)(self._var)
 
-        contribution_features_scaled_down = [ilayers.Divide_no_nan()([a, std]) for a in contribution_features]
+        # contribution_features_scaled_down = [ilayers.Divide_no_nan()([a, std]) for a in contribution_features]
 
        
-        absolut = [ilayers.Absolut()([a]) for a in contribution_features]    
+        # absolut = [ilayers.Absolut()([a]) for a in contribution_features]    
 
-        log_of_ten = [ilayers.Log_Of_Ten()(a) for a in absolut]
+        # log_of_ten = [ilayers.Log_Of_Ten()(a) for a in absolut]
 
-        not_equal = [ilayers.Not_Equal_Zero()(a) for a in absolut]
+        # not_equal = [ilayers.Not_Equal_Zero()(a) for a in absolut]
 
-        log_of_ten = [ilayers.Where()([a, b, tf.constant(0.0)]) for a, b in zip(not_equal, log_of_ten)]
+        # log_of_ten = [ilayers.Where()([a, b, tf.constant(0.0)]) for a, b in zip(not_equal, log_of_ten)]
 
-        squeezed_log = [ilayers.Squeeze()(a) for a in log_of_ten]
+        # squeezed_log = [ilayers.Squeeze()(a) for a in log_of_ten]
 
-        std_rel =  [ilayers.Reduce_std_sparse()([a, b]) for a, b in zip(squeezed_log, casted_mask_the_zeros_list)]
+        # std_rel =  [ilayers.Reduce_std_sparse()([a, b]) for a, b in zip(squeezed_log, casted_mask_the_zeros_list)]
 
-        ratio_norm = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(log_of_ten, std_rel)]
+        # ratio_norm = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(log_of_ten, std_rel)]
 
         # regions_act = [ilayers.Multiply()([squeezed_log[-1], a]) for a in casted_mask_the_zeros_list]
 
@@ -173,31 +173,31 @@ class BatchNormalizationRevealLayer(igraph.ReverseMappingBase):
 
         # ratio = [ilayers.Multiply()([a, b]) for a, b in zip(ratio_norm, std_act)]
 
-        ratio = [ilayers.Multiply()([a, std_rel[-1]]) for a in ratio_norm]
+        # ratio = [ilayers.Multiply()([a, std_rel[-1]]) for a in ratio_norm]
 
-        power = [ilayers.Power()(a) for a in ratio]
+        # power = [ilayers.Power()(a) for a in ratio]
 
-        scaler = [ilayers.Where()([a, b, tf.constant(0.0)]) for a, b in zip(not_equal, power)]
+        # scaler = [ilayers.Where()([a, b, tf.constant(0.0)]) for a, b in zip(not_equal, power)]
 
-        ratio_non_abs = [ilayers.Divide_no_nan()([a, scaler[-1]]) for a in scaler]
+        # ratio_non_abs = [ilayers.Divide_no_nan()([a, scaler[-1]]) for a in scaler]
 
-        ratio = [ilayers.Absolut()([a]) for a in ratio_non_abs]    
+        # ratio = [ilayers.Absolut()([a]) for a in ratio_non_abs]    
 
-        weighted_mean = [ilayers.Multiply()([self._mean, a]) for a in ratio]
+        # weighted_mean = [ilayers.Multiply()([self._mean, a]) for a in ratio]
 
-        weighted_shifting_factor = [ilayers.Divide_no_nan()([a, std]) for a in weighted_mean]
-
-
-
-        contribution = [ilayers.Substract()([a, b]) for a, b in zip(contribution_features_scaled_down, weighted_shifting_factor)]
+        # weighted_shifting_factor = [ilayers.Divide_no_nan()([a, std]) for a in weighted_mean]
 
 
-        # weight = [ilayers.Divide_no_nan()([a, contribution[-1]]) for a in contribution]
 
-        # absolut = [ilayers.Absolut()([a]) for a in weight]    
+        # contribution = [ilayers.Substract()([a, b]) for a, b in zip(contribution_features_scaled_down, weighted_shifting_factor)]
 
 
-        weighted_beta = [ilayers.Multiply()([a, self._beta]) for a in ratio]
+        # # weight = [ilayers.Divide_no_nan()([a, contribution[-1]]) for a in contribution]
+
+        # # absolut = [ilayers.Absolut()([a]) for a in weight]    
+
+
+        # weighted_beta = [ilayers.Multiply()([a, self._beta]) for a in ratio]
 
         # contribution = [ilayers.Add()([a, self._beta]) for a in contribution]
 
@@ -231,15 +231,15 @@ class BatchNormalizationRevealLayer(igraph.ReverseMappingBase):
 
         # weighted_beta = [ilayers.Multiply()([self._beta, a]) for a in ratio]
 
-        contribution = [ilayers.Add()([a, b]) for a, b in zip(contribution, weighted_beta)]
+        # contribution = [ilayers.Add()([a, b]) for a, b in zip(contribution, weighted_beta)]
 
-        contribution = [ilayers.Concat()(contribution)]
+        # contribution = [ilayers.Concat()(contribution)]
 
-        contribution = [ilayers.Multiply()([a, b]) for a, b in zip(contribution, casted_mask_the_zeros)]
+        # contribution = [ilayers.Multiply()([a, b]) for a, b in zip(contribution, casted_mask_the_zeros)]
 
-        ratio = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(contribution, Ys)]
+        ratio = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(Rs, Ys)]
 
-        return contribution, ratio
+        return Rs, ratio
 
 
 class AddRevealLayer(igraph.ReverseMappingBase):
