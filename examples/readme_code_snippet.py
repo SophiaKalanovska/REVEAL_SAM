@@ -56,8 +56,17 @@ if __name__ == "__main__":
     # Load an image.
     # Need to download examples images first.
     # See script in images directory.
-    # image_name = "tiger.jpeg"
-    image_name = "guini.jpg"
+
+    folder_path = "./ILSVRC"  # Modify this as needed
+
+    # List all files in the folder
+    filenames = os.listdir(folder_path)
+
+    # Process each filename using the method
+    for filename in filenames:
+
+    image_name = "tiger.jpg"
+    # image_name = "guini.jpg"
     # image_name = "piano_monkey.jpeg"
     # image_name = "bike_balloons.jpeg"
 
@@ -128,6 +137,20 @@ if __name__ == "__main__":
     # Plot
     # plt.imshow(b[0], cmap="seismic", clim=(-1, 1))
     # plt.savefig(image_name + "_heatmap.png")
+    # plt.show()
+
+
+    # Plot in 3D
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111, projection='3d')
+
+    # x = np.linspace(0, 224, 224)
+    # y = np.linspace(0, 224, 224)
+    # X, Y = np.meshgrid(x, y)
+    # Z = b[0]
+
+    # ax.plot_surface(X, Y, Z, cmap='viridis')
+
     # plt.show()
 
     masks, masks_from_heatmap3D = innvestigate.masks_from_heatmap.retrieve_pixels(a, x, image_size)

@@ -8,27 +8,9 @@ import matplotlib.pyplot as plt
 def jenks_breaks(activations, numberOfBreaks, image_size, n, cutoff, x):
     result = activations.flatten()
     image = x
-    quaters = np.floor(result.size / n)
     top_nity = np.percentile(result, 90)
-    innerbreaks = []
-    jnb = JenksNaturalBreaks(numberOfBreaks)
-    for i in range(n):
-        if int(quaters)*i == 0:
-            result_new = result[:int(quaters)]
-            jnb.fit(result_new)
-            innerbreaks.append(jnb.breaks_)
-        elif i == n-1:
-            result_new = result[int(quaters) * i:]
-            jnb.fit(result_new)
-            innerbreaks.append(jnb.breaks_)
-        else:
-            result_new = result[int(quaters)*i:][:int(quaters)]
-            jnb.fit(result_new)
-            innerbreaks.append(jnb.breaks_)
 
     activation_ranges = []
-    # activation_new = []
-    rows_down = (quaters / activations[1].size) + 1
 
     y = -1
     for i in activations:
@@ -36,28 +18,46 @@ def jenks_breaks(activations, numberOfBreaks, image_size, n, cutoff, x):
         x = -1
         for j in i:
             x += 1
-            for r in range(n):
-                if y >= rows_down*(r) and y <= rows_down*(r+1):
-                    if abs(j) > innerbreaks[r][-3] and abs(j) > 0.137:
-                    # if abs(j) > innerbreaks[r][-2] and abs(j) > top_nity:
-                    # if abs(j) > innerbreaks[r][-3] and abs(j) > 0.012:
-                        # activation_ranges.append((x , image_size - y, image[0][y][x][0] / 3, image[0][y][x][1] / 3, image[0][y][x][2]/ 3))
-                        # activation_ranges.append((x , image_size - y, np.dot(image[0][y][x][...,:3], [0.2989, 0.5870, 0.1140])))
-                        activation_ranges.append((x , image_size - y, j*460))
-                        continue
-                        # activation.append(j)
-                    #     continue
-                    # else:
-                    #     activation.append(0)
-                    #     continue
-        # activation_new.append(activation)
 
+            if abs(j) > top_nity:
+                activation_ranges.append((x , image_size - y, image[0][y][x][0] / 3, image[0][y][x][1] / 3, image[0][y][x][2]/ 3))
+                continue
 
-    # activation_ranges = remove_bottom(activation_new, 5, image_size)
-    if len(activation_ranges) < cutoff and numberOfBreaks > 1:
-        activation_ranges = jenks_breaks(activations, numberOfBreaks - 1, image_size, n, cutoff)
     return activation_ranges
 
+# def jenks_breaks(activations, numberOfBreaks, image_size, n, cutoff, x):
+#     result = activations.flatten()
+    
+#     image = x
+#     # quaters = np.floor(result.size / n)
+#     top_nity = np.percentile(result, 90)
+#     innerbreaks = []
+#     jnb = JenksNaturalBreaks(numberOfBreaks)
+#     n, m = n, n  # Define the number of rows and columns for the grid. You can adjust these as needed.
+
+#     square_height = activations.shape[0] // n
+#     square_width = activations.shape[1] // m
+#     for row in range(n):
+#         for col in range(m):
+#             square_activations = activations[row * square_height: (row + 1) * square_height, 
+#                                             col * square_width: (col + 1) * square_width]
+#             square_flattened = square_activations.flatten()
+            
+#             jnb.fit(square_flattened)
+#             innerbreaks.append(jnb.breaks_)
+
+
+#     activation_ranges = []
+
+#     for y in range(activations.shape[0]):
+#         for x in range(activations.shape[1]):
+#             # Determine which square the current activation belongs to
+#             square_idx = m * (y // square_height) + (x // square_width)
+#             j = activations[y, x]
+#             if abs(j) > innerbreaks[square_idx][-2] and abs(j) > top_nity:
+#                 activation_ranges.append((x, image_size - y, j* 100, image[0][y][x][0] / 3, image[0][y][x][1] / 3, image[0][y][x][2] / 3))        
+
+#     return activation_ranges
 
 #
 # def remove_bottom(activations, numberOfBreaks, image_size):

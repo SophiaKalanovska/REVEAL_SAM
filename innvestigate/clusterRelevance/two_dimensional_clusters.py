@@ -23,7 +23,7 @@ def DbSCAN_for_activations(top_pixels, image_size, a):
     i = 0
     eps = 9
     minpts = 50
-    while n_clusters_ > 3 or n_noise_ > len(top_pixels) / 3:
+    while n_clusters_ > 7 or n_noise_ > len(top_pixels) / 3:
         i += 1
         db = DBSCAN(eps=eps, min_samples=minpts).fit(top_pixels)
         core_samples_mask = np.zeros_like(db.labels_, dtype=bool)

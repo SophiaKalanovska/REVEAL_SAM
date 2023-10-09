@@ -1,6 +1,6 @@
 import numpy as np
 from . import  one_dimensional_breaks, two_dimensional_clusters, random_clusters, masks_from_heatmap
-
+import matplotlib.pyplot as plt
 import cv2
 
 def remove_contained_parts(bigger_mask, smaller_masks):
@@ -47,6 +47,18 @@ def retrieve_pixels(a, x, size):
 
     # Visualise the activation ranges
     # one_dimensional_breaks.visualise_breaks(b[0])
+
+
+    # Extracting x and y coordinates
+    x_coords = [vector[0] for vector in categories]
+    y_coords = [vector[1] for vector in categories]
+
+    # Plotting
+    plt.scatter(x_coords, y_coords, color='red', s=1)  # 's=1' sets the size of markers to 1 for pixel-like appearance
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    plt.grid(False)
+    plt.show()
 
     # Create masks for each cluster found on the level with highest activation
     masks, masks_with_ones = two_dimensional_clusters.DbSCAN_for_activations(categories, activations[-1].size, a)

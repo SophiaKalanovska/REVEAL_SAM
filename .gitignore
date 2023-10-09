@@ -3,3 +3,4 @@
 .idea
 *.pth
 .pth
+examples/ILSVRC/*
