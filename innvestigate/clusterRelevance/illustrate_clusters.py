@@ -9,6 +9,9 @@ import copy
 import skimage.color as skc
 # import sk.color.gray2rgb
 import supervision as sv
+from random import randrange
+import numpy as np
+np.random.seed(43)
 import cv2
 
 
@@ -40,6 +43,27 @@ class Illustrate:
         #    239, 241, 251, 257, 263, 269, 271, 277
 
         self.color_map = {0: np.array([255, 255, 255]), # white
+                        
+                    # 3: np.array([randrange(255),randrange(255),randrange(255)]), #dark red 
+                    # 5: np.array([randrange(255),randrange(255),randrange(255)]), # red
+                    # #  7: np.array([255, 102, 102]), # light red
+                    # 11: np.array([randrange(255),randrange(255),randrange(255)]),# orange
+                    # 13: np.array([randrange(255),randrange(255),randrange(255)]),# light orange
+                    # 17: np.array([randrange(255),randrange(255),randrange(255)]),# yellow
+                    # 19: np.array([randrange(255),randrange(255),randrange(255)]), # green
+                    # 23: np.array([randrange(255),randrange(255),randrange(255)]), # blueish green
+                    # 29: np.array([randrange(255),randrange(255),randrange(255)]), # light blue
+                    # 31: np.array([randrange(255),randrange(255),randrange(255)]),  # blue
+                    # 37: np.array([randrange(255),randrange(255),randrange(255)]), # dark blue
+                    # 41: np.array([randrange(255),randrange(255),randrange(255)]), # purple
+                    # 43: np.array([randrange(255),randrange(255),randrange(255)]), #black
+                    # 53: np.array([randrange(255),randrange(255),randrange(255)]),
+                    # 59: np.array([randrange(255),randrange(255),randrange(255)]),
+                    # 61: np.array([randrange(255),randrange(255),randrange(255)]),
+                    # 67: np.array([randrange(255),randrange(255),randrange(255)]),
+                    # 71: np.array([randrange(255),randrange(255),randrange(255)]),
+                    # 73: np.array([randrange(255),randrange(255),randrange(255)]),
+
                     3: np.array([204, 0, 0]), #dark red 
                     5: np.array([255, 0, 0]), # red
                     #  7: np.array([255, 102, 102]), # light red
@@ -52,7 +76,8 @@ class Illustrate:
                     31: np.array([0, 0, 204]),  # blue
                     37: np.array([0, 0, 153]), # dark blue
                     41: np.array([51, 0, 102]), # purple
-                    43: np.array([0, 0, 0]), #black
+                    
+                    
                 # 41: np.array([255, 180, 80]),
                 # 43: np.array([255, 180, 10]),
                 # -999: np.array([255, 180, 255]),
@@ -62,15 +87,33 @@ class Illustrate:
         grey = np.dot(rgb[...,:3], [0.2989, 0.5870, 0.1140])
         return skc.gray2rgb(grey)
     
-    def mask_to_input_relevance_of_mask(self, relevance, masks_from_heatmap3D, label, scene_colour, detections, masks):
+    def mask_to_input_relevance_of_mask(self, relevance, masks_from_heatmap3D, scene_colour, detections, masks, label = None):
         opacity = 0.6
         print(relevance)
-        full_relevance = relevance[-1]
-        regions_relevance = relevance[-2]
-        relevances_clusters = relevance[:-2]
+        # full_relevance = relevance[-1]
+        # regions_relevance = relevance[-2]
+        # relevances_clusters = relevance[:-2]
+        relevances_clusters = relevance
         # masks = masks_from_heatmap3D[:-2]
 
-        detections = detections[: 6]
+        # hey = []
+        # whole = masks[0]
+        # for m in masks: 
+        #     hey.append(m.astype(int) * b)
+        #     whole = np.logical_or(m, whole)
+
+        # last = np.invert(whole).astype(int)
+        # masks.append(last)
+        # hey.append(last * b)
+
+        # result = []
+        # for e in hey:
+        #     n = np.count_nonzero(e)
+        #     sum = np.sum(e)
+        #     result.append(sum/n)
+
+        # relevances_clusters = result 
+        detections = detections[:10]
         image = copy.copy(scene_colour)
         scene = self.rgb2gray(copy.copy(scene_colour))
         
@@ -83,12 +126,14 @@ class Illustrate:
         custom_lines = []
 
         for i in np.flip(np.argsort(detections.area)):
+                if i >= 10:
+                    relevance = np.array([randrange(255),randrange(255),randrange(255)])
+                    color = Color(relevance[0], relevance[1], relevance[2])
+                else:
+                    relevance = self.primes[i]
+                    color = Color(self.color_map[relevance][0], self.color_map[relevance][1], self.color_map[relevance][2])
 
-                relevance = self.primes[i]
-
-                color = Color(self.color_map[relevance][0], self.color_map[relevance][1], self.color_map[relevance][2])
-
-                mask = masks_with_ones_sorted[i]
+                mask = masks[i]
                 colored_mask = np.zeros_like(scene, dtype=np.uint8)
                 colored_mask[:] = color.as_bgr()
 
@@ -101,7 +146,7 @@ class Illustrate:
                 custom_lines.append(Line2D([0], [0], marker='o', color='w', label='Scatter',
                     markerfacecolor= '#%02x%02x%02x' % tuple(color.as_rgb()), markersize=10))
 
-        relevances = np.around(relevances_sorted, decimals=3)
+        # relevances = np.around(relevances_sorted, decimals=3)
 
         images=[image, scene.astype("uint8")]
         nrows, ncols = (1, 3)
@@ -129,18 +174,25 @@ class Illustrate:
                     
 
             ax.axis("off")
-        l = ax.legend(custom_lines, relevances, title="Relevance of label \n " + label + "\n out of " + r"$\bf{" "%.3f" % full_relevance + "}$" "\n",
-        loc='center left', bbox_to_anchor=(0, 0.5), fancybox=True, shadow=True, fontsize=11,
+        l = ax.legend(custom_lines,[ "" for _ in range(len(custom_lines))] ,title=
+                      "The number of clusters identifyed is "+  str(len(masks)) +"\n",
+        loc='center left', bbox_to_anchor=(-0.17, 0.5), fancybox=True, shadow=True,  ncol=2,fontsize=11,
         title_fontsize=11, alignment="center")
+        #               "Relevance of label \n " + label + "\n out of " + r"$\bf{" "%.3f" % full_relevance + "}$" "\n",
+        # loc='center left', bbox_to_anchor=(0, 0.5), fancybox=True, shadow=True, fontsize=11,
+        # title_fontsize=11, alignment="center")
+        plt.savefig("vgg16_v3/SAM.png")
         plt.setp(l.get_title(), multialignment='center')
         plt.show()
 
-    def mask_to_input_relevance_of_pixels(self, relevance, masks_from_heatmap3D, label): 
+    def mask_to_input_relevance_of_pixels(self, relevance, masks_from_heatmap3D, label, image_name): 
         print(relevance)
-        full_relevance = relevance[-1]
-        regions_relevance = relevance[-2]
-        relevances_clusters = relevance[:-2]
-        masks = masks_from_heatmap3D[:-2]
+        # full_relevance = relevance[-1]
+        # regions_relevance = relevance[-2]
+        # relevances_clusters = relevance[:-2]
+        # masks = masks_from_heatmap3D[:-2]
+        relevances_clusters = relevance
+        masks = masks_from_heatmap3D
         
         relevances_sorted, masks_with_ones_sorted = zip(*sorted(zip(relevances_clusters, masks), key = lambda x:x[0], reverse=True))
 
@@ -186,10 +238,15 @@ class Illustrate:
         ax.axes.xaxis.set_ticklabels([])
         box = ax.get_position()
         ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-        l = ax.legend(custom_lines, relevances, title="Relevance of label \n " + label + "\n out of " + r"$\bf{" "%.3f" % full_relevance + "}$" "\n",
-                    loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True, fontsize=11,
-                    title_fontsize=11, alignment="center")
+        # l = ax.legend(custom_lines, relevances, title="Relevance of label \n " + label + "\n out of " + r"$\bf{" "%.3f" % full_relevance + "}$" "\n",
+        #             loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True, fontsize=11,
+        #             title_fontsize=11, alignment="center")
 
-        plt.setp(l.get_title(), multialignment='center')
+        # plt.setp(l.get_title(), multialignment='center')
         plt.imshow(data_3d)
-        plt.show()              
+        plt.savefig("vgg16_v3/" + image_name + "_heatmap.png")
+        # plt.show()
+        plt.clf()
+
+        # 
+        # plt.show()              

@@ -107,8 +107,8 @@ class AugmentReduceBase(WrapperBase):
     def create_analyzer_model(self):
         self._subanalyzer.create_analyzer_model()
 
-        if self._subanalyzer._n_debug_output > 0:
-            raise NotImplementedError("No debug output at subanalyzer is supported.")
+        # if self._subanalyzer._n_debug_output > 0:
+        #     raise NotImplementedError("No debug output at subanalyzer is supported.")
 
         model = self._subanalyzer._analyzer_model
         if None in model.input_shape[1:]:

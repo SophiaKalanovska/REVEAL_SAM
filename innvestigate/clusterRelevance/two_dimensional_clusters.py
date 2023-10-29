@@ -21,9 +21,9 @@ def DbSCAN_for_activations(top_pixels, image_size, a):
     n_noise_ = len(top_pixels)
     print(len(top_pixels))
     i = 0
-    eps = 9
-    minpts = 50
-    while n_clusters_ > 7 or n_noise_ > len(top_pixels) / 3:
+    eps = 12
+    minpts = 20
+    while n_clusters_ > 7 or n_noise_ > len(top_pixels) / 4:
         i += 1
         db = DBSCAN(eps=eps, min_samples=minpts).fit(top_pixels)
         core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
@@ -32,8 +32,8 @@ def DbSCAN_for_activations(top_pixels, image_size, a):
         # Number of clusters in labels, ignoring noise if present.
         outliers = (1 if -1 in labels else 0)
         n_clusters_ = len(set(labels)) - outliers
-        eps += 0.5
-        minpts += 1
+        eps += 1
+        minpts += 2
         n_noise_ = list(labels).count(-1)
         data = np.array(top_pixels)
         nPoints = len(data)

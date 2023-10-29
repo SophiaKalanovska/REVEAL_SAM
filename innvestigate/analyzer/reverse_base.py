@@ -286,7 +286,7 @@ class ReverseAnalyzerBase(AnalyzerNetworkBase):
 
         self._reverse_keep_tensors = True
 
-        return_all_reversed_tensors = True
+        # return_all_reversed_tensors = True
 
         # if return_all_reversed_tensors is False,
         # reversed_tensors will be None
