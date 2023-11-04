@@ -50,18 +50,18 @@ def rank_and_sort_masks(masks0, masks1, masks2):
     masks2 = np.array(masks2)
     overlaps = []
 
-    # for mask1 in masks1:
-    #     overlap_sum = 0
-    #     for mask2 in masks2:
-    #         overlap = np.sum(np.logical_and(mask1, mask2))
-    #         overlap_sum += overlap
-    #     overlaps.append(overlap_sum)
+    for mask1 in masks1:
+        overlap_sum = 0
+        for mask2 in masks2:
+            overlap = np.sum(np.logical_and(mask1, mask2))
+            overlap_sum += overlap
+        overlaps.append(overlap_sum)
 
-    # ranked_indices = np.argsort(overlaps)[::-1]
-    # # # relevances_sorted, masks_with_ones_sorted = zip(*sorted(zip(relevances_clusters, masks), key = lambda x:x[0], reverse=True))
-    # sorted_mask = masks0[ranked_indices, ...]
-    # sorted_masks_3D = masks1[ranked_indices, ...]
-        # masks0 = np.array(masks0)
+    ranked_indices = np.argsort(overlaps)[::-1]
+    # # relevances_sorted, masks_with_ones_sorted = zip(*sorted(zip(relevances_clusters, masks), key = lambda x:x[0], reverse=True))
+    sorted_mask = masks0[ranked_indices, ...]
+    sorted_masks_3D = masks1[ranked_indices, ...]
+    #     masks0 = np.array(masks0)
     # masks1 = np.array(masks1)
     # masks2 = np.array(masks2)
 
@@ -73,6 +73,7 @@ def rank_and_sort_masks(masks0, masks1, masks2):
         covarage = []
         for mask2 in masks2:
             overlap = calculate_overlap_and_coverage(mask1, mask2)
+            # overlap = np.sum(np.logical_and(mask1, mask2))
             covarage.append(overlap)
         # if total_ones_in_mask1 != 0:  # Avoid division by zero
         #     overlap_percent = (overlap_sum / total_ones_in_mask1) * 100  # calculate percentage
@@ -162,24 +163,20 @@ def retrieve(a, x, size):
         masks[i] = remove_contained_parts(masks[i], masks[i+1:])     
         masks_two_channel.append(masks[i].astype(np.bool_))
 
-    
+
+    masks_two_channel = random_clusters.random_clusters(x, masks_two_channel)
+
     masks_resized = []
-    for ret in masks:
+    for ret in masks_two_channel:
         ret = np.asarray(ret, dtype=np.uint8).astype(np.float32)
         if ret.ndim == 2:
             ret = np.expand_dims(ret, -1)
-            masks_resized.append(np.expand_dims(np.repeat(ret, 3, axis=-1), 0))
+            masks_resized.append(np.expand_dims(np.repeat(ret, 3, axis=-1), 0))    
 
 
     
     masks_resized, masks_two_channel = zip(*sorted(zip(masks_resized, masks_two_channel), key = lambda x: count_ones(x[0]), reverse=True))
     masks_resized = list(masks_resized)
     masks_two_channel = list(masks_two_channel)
-    top_6 = masks_resized
 
-    # masks_3D = random_clusters.random_clusters(x, top_6)
-
-    masks =  random_clusters.random_clusters(x, masks_two_channel)
-
-
-    return masks, masks_resized
+    return masks_two_channel, masks_resized

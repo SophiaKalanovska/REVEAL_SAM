@@ -106,7 +106,6 @@ if __name__ == "__main__":
 
     mask_annotator = sv.MaskAnnotator()
     detections = sv.Detections.from_sam(result)
-    annotated_image = mask_annotator.annotate(copy.copy(image_rgb), detections)
 
     # model_call = vgg16
     # model_call = vgg19
@@ -144,10 +143,10 @@ if __name__ == "__main__":
     # print("--- %s minutes ---" % ((time.time() - start_time) / 60))
 
     # # Aggregate along color channels and normalize to [-1, 1]
-    b = a.sum(axis=np.argmax(np.asarray(a.shape) == 3))
-    b /= np.max(np.abs(b))
+    # b = a.sum(axis=np.argmax(np.asarray(a.shape) == 3))
+    # b /= np.max(np.abs(b))
 
-    # # Plot
+    # # # Plot
     # plt.imshow(b[0], cmap="seismic", clim=(-1, 1))
     # plt.savefig("vgg16_heat_map/" + image_path + "_heatmap.png")
     # # plt.show()
@@ -174,12 +173,12 @@ if __name__ == "__main__":
     
     sorted_mask, sorted_masks_3D = sorted_mask[:10], sorted_masks_3D[:10]
 
-    # analyzer = innvestigate.create_analyzer("reveal.alpha_2_beta_1", model, **{"masks": masks_from_heatmap3D})
+    analyzer = innvestigate.create_analyzer("reveal.alpha_2_beta_1", model, **{"masks": masks_from_heatmap3D_pixels})
 
 
     # # # Apply analyzer w.r.t. maximum activated output-neuron
     # start_time = time.time()
-    # relevance = analyzer.analyze(x)
+    relevance = analyzer.analyze(x)
     # print("--- %s minutes ---" % ((time.time() - start_time) / 60))
 
     illustrate = innvestigate.illustrate_clusters.Illustrate()

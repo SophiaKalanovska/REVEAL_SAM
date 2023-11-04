@@ -81,6 +81,7 @@ analyzers: dict[str, type[AnalyzerBase]] = {
     # "lrp.sequential_preset_b_flat_until_idx": LRPSequentialPresetBFlatUntilIdx,
     "reveal": REVEAL,
     "reveal.alpha_beta": REVEALAlphaBeta,
+    # "reveal.pendulum": PENDULUM,
     "reveal.alpha_2_beta_1": REVEALAlpha2Beta1
 }
 

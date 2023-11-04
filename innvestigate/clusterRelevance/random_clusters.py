@@ -23,14 +23,14 @@ def random_clusters(x, masks = []):
     # all_regions = np.sum(masks, 0, keepdims=True)[0]
     # masks.append(zero_mask)
     # masks.append(random_mask_2)
-    masks = []
+
     for label in range(1, num_labels):  # Start from 1 to ignore the background
         component_mask = (labels == label).astype(np.uint8) * 1
         area = np.sum(component_mask)
         if area >= min_area_threshold:
-            masks.append(component_mask)
+            masks.append(component_mask.astype(np.bool_))
 
-    masks.append(inverted_summed_mask)
+    # masks.append(inverted_summed_mask)
     # masks.append(one_mask)
     # return [all_regions, one_mask]
     return masks

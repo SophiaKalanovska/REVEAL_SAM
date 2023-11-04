@@ -47,9 +47,6 @@ tensorflow-metal = "^0.8.0"
 torch = "^2.0.1"
 torchvision = "^0.15.2"
 scikit-image = "^0.21.0"
-opencv-python = "^4.8.1.78"
-supervision = "^0.16.0"
-segment-anything = "^1.0"
 
 [tool.poetry.dev-dependencies]
 black  = "^22.3"

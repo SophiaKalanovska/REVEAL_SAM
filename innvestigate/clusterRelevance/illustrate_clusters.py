@@ -245,8 +245,8 @@ class Illustrate:
         # plt.setp(l.get_title(), multialignment='center')
         plt.imshow(data_3d)
         plt.savefig("vgg16_v3/" + image_name + "_heatmap.png")
-        # plt.show()
-        plt.clf()
+        plt.show()
+        # plt.clf()
 
         # 
         # plt.show()              

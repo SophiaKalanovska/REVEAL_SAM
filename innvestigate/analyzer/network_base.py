@@ -276,7 +276,7 @@ class AnalyzerNetworkBase(AnalyzerBase):
             ret = self._analyzer_model.predict_on_batch(X)
         if self._n_debug_output > 0:
             self._handle_debug_output(ret[-self._n_debug_output:])
-            ret = ret[: -self._n_debug_output]
+            # ret = ret[: -self._n_debug_output]
 
         return ibackend.unpack_singleton(ret)
 

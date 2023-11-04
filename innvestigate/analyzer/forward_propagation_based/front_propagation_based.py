@@ -649,7 +649,6 @@ class REVEALAlphaBeta(REVEAL):
         kwargs.update({"alpha": alpha, "beta": beta, "bias": bias})
         return kwargs
 
-
 class _REVEALAlphaBetaFixedParams(REVEALAlphaBeta):
     @classmethod
     def _state_to_kwargs(cls, state):
