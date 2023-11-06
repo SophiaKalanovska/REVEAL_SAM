@@ -97,12 +97,12 @@ class EpsilonRule(kgraph.ReverseMappingBase):
     0 is considered to be positive, ie sign(0) = 1
     """
 
-    def __init__(self, layer, state, epsilon=1e-7, bias=True):
+    def __init__(self, layer, reverse_state, epsilon=1e-7, bias=True):
         self._epsilon = rutils.assert_lrp_epsilon_param(epsilon, self)
         self._layer_wo_act = kgraph.copy_layer_wo_activation(
             layer, keep_bias=bias, name_template="reversed_kernel_%s")
 
-    def apply(self, Xs, Ys, Rs, reversed_jacobian_Ys, reverse_state):
+    def apply(self, Xs, Ys, Rs, reversed_jacobian_Ys):
         grad = ilayers.GradientWRT(len(Xs))
         # The epsilon rule aligns epsilon with the (extended) sign: 0 is considered to be positive
         prepare_div = keras.layers.Lambda(
@@ -116,7 +116,7 @@ class EpsilonRule(kgraph.ReverseMappingBase):
                for a, b in zip(Rs, Zs)]
         # Propagate the relevance to input neurons
         # using the gradient.
-        tmp = iutils.to_list(grad(Xs + Zs + tmp))
+        tmp = kutils.to_list(grad(Xs + Zs + tmp))
         # Re-weight relevance with the input values.
         return [keras.layers.Multiply()([a, b])
                 for a, b in zip(Xs, tmp)]
@@ -125,7 +125,7 @@ class EpsilonRule(kgraph.ReverseMappingBase):
 class EpsilonIgnoreBiasRule(EpsilonRule):
     """Same as EpsilonRule but ignores the bias."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, layer, reverse_state, *args, **kwargs):
         super(EpsilonIgnoreBiasRule, self).__init__(*args,
                                                     bias=False,
                                                     **kwargs)
@@ -134,7 +134,7 @@ class EpsilonIgnoreBiasRule(EpsilonRule):
 class WSquareRule(kgraph.ReverseMappingBase):
     """W**2 rule from Deep Taylor Decomposition"""
 
-    def __init__(self, layer, state, copy_weights=False):
+    def __init__(self, layer, reverse_state, copy_weights=False):
         # W-square rule works with squared weights and no biases.
         if copy_weights:
             weights = layer.get_weights()
@@ -150,7 +150,7 @@ class WSquareRule(kgraph.ReverseMappingBase):
             weights=weights,
             name_template="reversed_kernel_%s")
 
-    def apply(self, Xs, Ys, Rs, reversed_jacobian_Ys, reverse_state):
+    def apply(self, Xs, Ys, Rs,  reverse_state):
         grad = ilayers.GradientWRT(len(Xs))
         # Create dummy forward path to take the derivative below.
         Ys = kutils.apply(self._layer_wo_act_b, Xs)
@@ -169,7 +169,7 @@ class WSquareRule(kgraph.ReverseMappingBase):
 class FlatRule(WSquareRule):
     """Same as W**2 rule but sets all weights to ones."""
 
-    def __init__(self, layer, state, copy_weights=False):
+    def __init__(self, layer, reverse_state, copy_weights=False):
         # The flat rule works with weights equal to one and
         # no biases.
         if copy_weights:

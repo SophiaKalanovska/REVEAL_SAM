@@ -577,8 +577,6 @@ class LRPEpsilon(_LRPFixedParams):
     """LRP-analyzer that uses the LRP-Epsilon rule"""
 
     def __init__(self, model, epsilon=1e-7, bias=True, *args, **kwargs):
-        epsilon = rutils.assert_lrp_epsilon_param(epsilon, self)
-        self._epsilon = epsilon
 
         class EpsilonProxyRule(rrule.EpsilonRule):
             """
