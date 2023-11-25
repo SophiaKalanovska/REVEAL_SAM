@@ -41,7 +41,7 @@ def calculate_overlap_and_coverage(mask1, mask2):
     # Combine metrics (example: average coverage)
     combined_metric = (coverage_mask1 + coverage_mask2) / 2
 
-    return coverage_mask2
+    return combined_metric
 
 
 def rank_and_sort_masks(masks0, masks1, masks2):

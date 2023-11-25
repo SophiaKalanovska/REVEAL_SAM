@@ -87,13 +87,13 @@ class Illustrate:
         grey = np.dot(rgb[...,:3], [0.2989, 0.5870, 0.1140])
         return skc.gray2rgb(grey)
     
-    def mask_to_input_relevance_of_mask(self, relevance, masks_from_heatmap3D, scene_colour, detections, masks, label = None):
+    def mask_to_input_relevance_of_mask(self, relevance, masks_from_heatmap3D, scene_colour, detections, masks, image_path, label = None):
         opacity = 0.6
         print(relevance)
-        # full_relevance = relevance[-1]
+        full_relevance = relevance[-1]
         # regions_relevance = relevance[-2]
         # relevances_clusters = relevance[:-2]
-        relevances_clusters = relevance
+        relevances_clusters = relevance[:-1]
         # masks = masks_from_heatmap3D[:-2]
 
         # hey = []
@@ -133,7 +133,7 @@ class Illustrate:
                     relevance = self.primes[i]
                     color = Color(self.color_map[relevance][0], self.color_map[relevance][1], self.color_map[relevance][2])
 
-                mask = masks[i]
+                mask = masks_with_ones_sorted[i]
                 colored_mask = np.zeros_like(scene, dtype=np.uint8)
                 colored_mask[:] = color.as_bgr()
 
@@ -155,6 +155,8 @@ class Illustrate:
             raise ValueError(
                 "The number of images exceeds the grid size. Please increase the grid size or reduce the number of images."
             )
+        
+        # relevances = np.squeeze(np.around(relevances_sorted, decimals=3), 1) 
 
         fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(12, 12))
         plt.tick_params(bottom=False, left=False)
@@ -174,16 +176,21 @@ class Illustrate:
                     
 
             ax.axis("off")
-        l = ax.legend(custom_lines,[ "" for _ in range(len(custom_lines))] ,title=
-                      "The number of clusters identifyed is "+  str(len(masks)) +"\n",
-        loc='center left', bbox_to_anchor=(-0.17, 0.5), fancybox=True, shadow=True,  ncol=2,fontsize=11,
-        title_fontsize=11, alignment="center")
-        #               "Relevance of label \n " + label + "\n out of " + r"$\bf{" "%.3f" % full_relevance + "}$" "\n",
-        # loc='center left', bbox_to_anchor=(0, 0.5), fancybox=True, shadow=True, fontsize=11,
+        # l = ax.legend(custom_lines,[ "" for _ in range(len(custom_lines))] ,title=
+        #               "The number of clusters identifyed is "+  str(len(masks)) +"\n",
+        # loc='center left', bbox_to_anchor=(-0.17, 0.5), fancybox=True, shadow=True,  ncol=2,fontsize=11,
         # title_fontsize=11, alignment="center")
-        plt.savefig("vgg16_v3/SAM.png")
+
+        l = ax.legend(custom_lines, relevances_sorted, title="Relevance of label \n " + label + "\n out of " + r"$\bf{" "%.3f" % full_relevance + "}$" "\n",
+            loc='center left', bbox_to_anchor=(0.3, 0.5), fancybox=True, shadow=True, fontsize=11,
+            title_fontsize=11, alignment="center")
+        plt.savefig("vgg16_v3/" + image_path + ".png")
         plt.setp(l.get_title(), multialignment='center')
         plt.show()
+
+        #        "Relevance of label \n " + label + "\n out of " + r"$\bf{" "%.3f" % full_relevance + "}$" "\n",
+        # loc='center left', bbox_to_anchor=(0, 0.5), fancybox=True, shadow=True, fontsize=11,
+        # title_fontsize=11, alignment="center")
 
     def mask_to_input_relevance_of_pixels(self, relevance, masks_from_heatmap3D, label, image_name): 
         print(relevance)
@@ -238,13 +245,13 @@ class Illustrate:
         ax.axes.xaxis.set_ticklabels([])
         box = ax.get_position()
         ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-        # l = ax.legend(custom_lines, relevances, title="Relevance of label \n " + label + "\n out of " + r"$\bf{" "%.3f" % full_relevance + "}$" "\n",
-        #             loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True, fontsize=11,
-        #             title_fontsize=11, alignment="center")
+        l = ax.legend(custom_lines, relevances, title="Relevance of label \n " + label + "\n out of " + r"$\bf{" "%.3f" % full_relevance + "}$" "\n",
+                    loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True, fontsize=11,
+                    title_fontsize=11, alignment="center")
 
-        # plt.setp(l.get_title(), multialignment='center')
+        plt.setp(l.get_title(), multialignment='center')
         plt.imshow(data_3d)
-        plt.savefig("vgg16_v3/" + image_name + "_heatmap.png")
+        plt.savefig("vgg16_reverse_LRP/" + image_name + "_heatmap.png")
         plt.show()
         # plt.clf()
 

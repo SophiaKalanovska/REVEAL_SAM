@@ -12,6 +12,7 @@ import innvestigate.backend as kutils
 import tensorflow.keras.models as kmodels
 # import innvestigate as inn
 from importlib.machinery import SourceFileLoader
+import keras.applications.vgg16 as vgg16
 import copy
 import random
 # from clusterRelevance import illustrate_clusters
@@ -84,7 +85,7 @@ def compute_jacobian(activations, model, layer_index, R_k):
         # layer = kgraph.copy_layer_wo_activation(
         #      model.layers[layer_index], keep_bias=True, name_template="reversed_kernel_%s")
         # Forward pass to compute the intermediate activations
-        intermediate_output = model.layers[layer_index](activations)
+        intermediate_output = model.layers[layer_index+1](activations)
         # intermediate_output =  kutils.apply(layer, [activations])
     
     jacobian = tape.jacobian(intermediate_output, activations)
@@ -97,7 +98,7 @@ def compute_jacobian(activations, model, layer_index, R_k):
 
     sk_reshaped = tf.reshape(sk, elements_list)
     jacobian_scaled = tf.multiply(jacobian, sk_reshaped)
-    return intermediate_output, jacobian_scaled, jacobian, intermediate_output_eps
+    return intermediate_output, jacobian_scaled, intermediate_output_eps
 
 
 
@@ -117,184 +118,168 @@ utils = SourceFileLoader("utils", os.path.join(base_dir, "utils.py")).load_modul
 if __name__ == "__main__":
     tf.compat.v1.disable_eager_execution()
 
-    (train_images, train_labels), (test_images, test_labels) = datasets.mnist.load_data()
+    if len(sys.argv) < 2:
+        print("Usage: python my_program.py <image_path>")
+        sys.exit(1)
 
-    # Normalize pixel values to be between 0 and 1
-    train_images, test_images = train_images / 255.0, test_images / 255.0
+    image_path = sys.argv[1]
+    # print(image_path)
+    # image_path = "SAM1.JPEG"
+    model_call = vgg16
 
-    # Reshape for the CNN (adding channel dimension)
-    train_images = train_images[..., np.newaxis]
-    test_images = test_images[..., np.newaxis]
+    image_size = 224
 
-    # It can be used to reconstruct the model identically.
-    model = tf.keras.models.load_model("my_model.keras")
+    image = utils.load_image(
+        os.path.join(base_dir, "ILSVRC", image_path), image_size)
+    image_new = image[:, :, :3]
 
-    # Let's check:
-    example_image = test_images[0:1]  # Selecting the first image
-    # plt.imshow(example_image[0, :, :, 0], cmap='gray')
-    # np.testing.assert_allclose(
-    #     model.predict(example_image), reconstructed_model.predict(example_image)
-    # )
+    CHECKPOINT_PATH = "sam_vit_h_4b8939.pth"
+    DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    MODEL_TYPE = "vit_h"
 
-    model.predict(example_image)
-    # plt.show()
+    sam = sam_model_registry[MODEL_TYPE](checkpoint=CHECKPOINT_PATH)
+    sam.to(device=DEVICE)
 
-    # model_wo_softmax = innvestigate.model_wo_softmax(model)
+    mask_generator = SamAutomaticMaskGenerator(sam)
+    IMAGE_PATH = base_dir + "/images/"+ image_path
+
+    image_bgr = np.asarray(image_new, dtype=np.uint8)
+    image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+    result = mask_generator.generate(image_rgb)
+
+
+
+    mask_annotator = sv.MaskAnnotator()
+    detections = sv.Detections.from_sam(result)
+
+
+
+
+    model, preprocess = vgg16.VGG16(), vgg16.preprocess_input
+
+    model = innvestigate.model_wo_softmax(model)
+    x = preprocess(image[None])
+
+    masks, masks_from_heatmap3D = innvestigate.masks_from_heatmap.retrieve(result, x, image_size)
+
+
+    # Get model
 
     # Create analyzer
-    analyzer = innvestigate.create_analyzer("lrp.epsilon", model)
 
-    # Apply analyzer w.r.t. maximum activated output-neuron
-    analysis = analyzer.analyze(example_image) 
+    # Add batch axis and preprocess
 
+
+    analyzer = innvestigate.create_analyzer("lrp.alpha_1_beta_0", model)
+    pr = model.predict_on_batch(x)
+    the_label_index = np.argmax(pr, axis=1)
+    predictions = model_call.decode_predictions(pr)
+
+    # # distribute the relevance to the input layer
+    start_time = time.time()
+    analysis = analyzer.analyze(x)
+
+    masks_pixels, masks_from_heatmap3D_pixels = innvestigate.masks_from_heatmap.retrieve_pixels(analysis[0], x, image_size, image_path)
+
+    sorted_mask, sorted_masks_3D = innvestigate.masks_from_heatmap.rank_and_sort_masks(masks, masks_from_heatmap3D, masks_from_heatmap3D_pixels)
+    
+    sorted_mask, sorted_masks_3D = sorted_mask[:10], sorted_masks_3D[:10]
     # Visualize the result
 
     num_layers = len(model.layers)
-    R_prime = analysis[1:]  # Initial relevance
-
-    # percentile_95 = np.percentile(analysis[1:], 95)
-
-    # # Select elements that are at or above the 95th percentile
-    # top_95_percent = arr[arr >= percentile_95]
-
-    # P_jk = analysis[0]
-    
-    new_relevance_j = tf.cast(tf.convert_to_tensor(analysis[0]), tf.float32)
-    J_kj_list = []
-    a_j = tf.cast(tf.convert_to_tensor(example_image), tf.float32)
-
-    for j in range(num_layers):  # Iterate backwards through layers
-        R_j = tf.convert_to_tensor(analysis[-(j+1)])
-        print(R_j)
-        R_k = tf.convert_to_tensor(analysis[-(j+2)])
-        print(R_k)
-        # Compute scaled Jacobian matrix
-
-        a_k, J_kj, J_orig, a_k_eps = compute_jacobian(a_j, model, j, R_k)
-       
-        perm_from_kj_to_jk =[]
-        perm_from_jk_to_kj =[]
-        size_sk = len(R_k.shape)     
-        size_Rj = len(R_j.shape)     
+    ret = []
+    for i in range(10):
+        # percentile_95 = np.percentile(analysis[1:], 95)
+        # # Select elements that are at or above the 95th percentile
+        # top_95_percent = arr[arr >= percentile_95]
+        # P_jk = analysis[0]
         
-        for i in range(len(R_j.shape)):
-            index = size_sk+ i
-            perm_from_kj_to_jk.append(index)  
+        new_relevance_j = tf.cast(tf.convert_to_tensor(sorted_masks_3D[i]), tf.float32)
+        J_kj_list = []
+        a_j = tf.cast(tf.convert_to_tensor(x), tf.float32)
 
-        for i in range(len(R_k.shape)):
-            index = size_Rj+ i
-            perm_from_kj_to_jk.append(i) 
-            perm_from_jk_to_kj.append(index)  
+        for j in range(num_layers-1):  # Iterate backwards through layers
+            R_j = tf.convert_to_tensor(analysis[-(j+1)])
+            print(R_j)
+            R_k = tf.convert_to_tensor(analysis[-(j+2)])
+            print(R_k)
+            # Compute scaled Jacobian matrix
 
-        for i in range(len(R_j.shape)):   
-            perm_from_jk_to_kj.append(i)   
-
+            a_k, J_kj, a_k_eps = compute_jacobian(a_j, model, j, R_k)
         
-        # # A_jk =  tf.math.multiply(a_j, tf.ones_like(J_kj))
-        # A_jk = tf.math.multiply(a_j, tf.ones_like(R_k))
-        # A_jk =  tf.transpose(A_kj, perm_from_kj_to_jk)
+            perm_from_kj_to_jk =[]
+            perm_from_jk_to_kj =[]
+            size_sk = len(R_k.shape)     
+            size_Rj = len(R_j.shape)     
+            
+            for i in range(len(R_j.shape)):
+                index = size_sk+ i
+                perm_from_kj_to_jk.append(index)  
 
-        elements_list = list(a_j.shape)
+            for i in range(len(R_k.shape)):
+                index = size_Rj+ i
+                perm_from_kj_to_jk.append(i) 
+                perm_from_jk_to_kj.append(index)  
 
-        for i in range(len(J_kj.shape) - len(elements_list)):
-            elements_list.append(1)
+            for i in range(len(R_j.shape)):   
+                perm_from_jk_to_kj.append(i)   
 
-        a_j_reshaped = tf.reshape(a_j, elements_list)
+            elements_list = list(a_j.shape)
 
-        # # Step 3: Element-wise product and division
-        R_jk = tf.math.multiply(a_j_reshaped, tf.transpose(J_kj, perm_from_kj_to_jk))
+            for i in range(len(J_kj.shape) - len(elements_list)):
+                elements_list.append(1)
 
+            a_j_reshaped = tf.reshape(a_j, elements_list)
+
+            # # Step 3: Element-wise product and division
+            R_jk = tf.math.multiply(a_j_reshaped, tf.transpose(J_kj, perm_from_kj_to_jk))
+
+            elements_list = list(R_j.shape)
+
+            for i in range(len(R_jk.shape) - len(elements_list)):
+                elements_list.append(1)
+
+            R_j_reshaped = tf.reshape(R_j, elements_list)
+            P_jk = tf.math.divide_no_nan(R_jk, R_j_reshaped)
+
+            axis=[]
+            for i in range(len(R_k.shape)):   
+                axis.append(-(i+1))
+
+            new_relevance_j_reshaped = tf.reshape(new_relevance_j, elements_list)    
+            new_R_jk = tf.math.multiply(P_jk, new_relevance_j_reshaped)
+
+
+            axis=[]
+            for i in range(len(R_j.shape)):   
+                axis.append(i)
+
+            new_relevance_k = tf.reduce_sum(new_R_jk, axis=axis)
+
+            old_relevance_k = tf.reduce_sum(R_jk, axis=axis)
+
+            P_k = tf.math.divide_no_nan(new_relevance_k, old_relevance_k)
+
+            new_relevance_k = tf.math.multiply(R_k, P_k)
+            J_kj_list.append(new_relevance_k)
+            a_j = a_k
+            new_relevance_j = new_relevance_k
+
+        pendulum_model = kmodels.Model(
+                inputs=model.inputs,
+                outputs=new_relevance_j,
+                name=f"pendulum_analyzer_model",
+            )
+        ret.append(pendulum_model.predict_on_batch(x))
+        # with tf.compat.v1.Session(graph=tf.compat.v1.get_default_graph()) as sess:
+        #     # initilase global variables
+        #     sess.run(tf.compat.v1.global_variables_initializer())
+        #     input_tensor = model.input
+        #     # output_tensor = model.output
+        #     output_tensor = new_relevance_j
+        #     result = sess.run(output_tensor, feed_dict ={input_tensor:  example_image})
+        #     print("New Relevance J Values: ", new_relevance_j.eval())
+    illustrate = innvestigate.illustrate_clusters.Illustrate()
+    illustrate.mask_to_input_relevance_of_mask(ret, sorted_masks_3D, scene_colour = copy.copy(image_rgb), detections= detections, masks = sorted_mask, image_path = image_path, label=predictions[0][0][1])
+    # illustrate.mask_to_input_relevance_of_mask(ret.append(analysis[1]), sorted_masks_3D, scene_colour = copy.copy(image_rgb), detections= detections, masks = sorted_mask, label=the_label_index)
         
-        # J_kj_list.append(tf.tensordot(tf.transpose(R_jk, perm_from_jk_to_kj), tf.ones_like(new_relevance_j[-1]), int(len(R_j.shape))))
-
-        elements_list = list(R_j.shape)
-
-        for i in range(len(R_jk.shape) - len(elements_list)):
-            elements_list.append(1)
-
-        R_j_reshaped = tf.reshape(R_j, elements_list)
-        P_jk = tf.math.divide_no_nan(R_jk, R_j_reshaped)
-
-        axis=[]
-        for i in range(len(R_k.shape)):   
-            axis.append(-(i+1))
-
-        new_relevance_j_reshaped = tf.reshape(new_relevance_j, elements_list)    
-        new_R_jk = tf.math.multiply(P_jk, new_relevance_j_reshaped)
-
-
-        axis=[]
-        for i in range(len(R_j.shape)):   
-            axis.append(i)
-
-        new_relevance_k = tf.reduce_sum(new_R_jk, axis=axis)
-
-        old_relevance_k = tf.reduce_sum(R_jk, axis=axis)
-
-
-
-        P_k = tf.math.divide_no_nan(new_relevance_k, old_relevance_k)
-
-
-
-
-
-
-        # J_kj_list.append(P_jk)
-        
-        # Step 4: Compute new relevances
-
-        
-        # new_relevance_jk = tf.math.multiply(P_jk, tf.transpose(J_kj, perm_from_kj_to_jk))
-
-        # new_relevance_jk_prime = tf.math.divide_no_nan(new_relevance_jk, tf.transpose(J_orig, perm_from_kj_to_jk))
-
-        # elements_list = list(R_k.shape)
-
-        # for i in range(len(R_jk.shape) - len(elements_list)):
-        #     elements_list.insert(0, 1)
-
-        # a_k_reshaped = tf.reshape(a_k, elements_list)
-
-        # axis=[]
-        # for i in range(len(R_k.shape)):   
-        #     axis.append(-(i+1))
-        # J_kj_list.append(tf.reduce_sum(new_relevance_jk, axis=axis))
-
-        new_relevance_k = tf.math.multiply(R_k, P_k)
-        J_kj_list.append(new_relevance_k)
-        a_j = a_k
-        new_relevance_j = new_relevance_k
-
-    pendulum_model = kmodels.Model(
-            inputs=model.inputs,
-            outputs=J_kj_list,
-            name=f"pendulum_analyzer_model",
-        )
-    ret = pendulum_model.predict_on_batch(example_image)
-    # with tf.compat.v1.Session(graph=tf.compat.v1.get_default_graph()) as sess:
-    #     # initilase global variables
-    #     sess.run(tf.compat.v1.global_variables_initializer())
-    #     input_tensor = model.input
-    #     # output_tensor = model.output
-    #     output_tensor = new_relevance_j
-    #     result = sess.run(output_tensor, feed_dict ={input_tensor:  example_image})
-    #     print("New Relevance J Values: ", new_relevance_j.eval())
-
-    print(ret)
-    # with tf.compat.v1.Session() as sess:
-
-    #      # This will run the operations that compute the tensor and fetch its value
-    #     numpy_array = sess.run(new_relevance_j)
-    #     # Now you can access elements like you would in a numpy array
-    #     print(numpy_array)
-    # b = analysis.sum(axis=np.argmax(np.asarray(analysis.shape) == 3))
-    # b /= np.max(np.abs(b))
-
-    # plt.imshow(b, cmap="seismic", clim=(-1, 1))
-    # plt.savefig("vgg16_heat_map/"  + "_heatmap.png")
-    # plt.show()
-
-    # plt.imshow(analysis.squeeze(), cmap='seismic', clim=(-1, 1))
-    # plt.colorbar()
-    # plt.show()
