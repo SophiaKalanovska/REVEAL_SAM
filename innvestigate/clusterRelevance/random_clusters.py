@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-def random_clusters(x, masks = []):
+def inverted_masks(x, masks = []):
     # size_2 = x.shape[1], x.shape[2], 3
     # proba_0 = 0.99982
     # random_mask_2 = np.expand_dims(np.random.choice([0.0, 1.0], size=size_2, p=[proba_0, 1 - proba_0]), 0)

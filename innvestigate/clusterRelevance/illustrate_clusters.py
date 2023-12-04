@@ -113,7 +113,7 @@ class Illustrate:
         #     result.append(sum/n)
 
         # relevances_clusters = result 
-        detections = detections[:10]
+        detections = detections[:9]
         image = copy.copy(scene_colour)
         scene = self.rgb2gray(copy.copy(scene_colour))
         
@@ -184,9 +184,9 @@ class Illustrate:
         l = ax.legend(custom_lines, relevances_sorted, title="Relevance of label \n " + label + "\n out of " + r"$\bf{" "%.3f" % full_relevance + "}$" "\n",
             loc='center left', bbox_to_anchor=(0.3, 0.5), fancybox=True, shadow=True, fontsize=11,
             title_fontsize=11, alignment="center")
-        plt.savefig("vgg16_v3/" + image_path + ".png")
+        plt.savefig("/Users/sophia/Documents/REVEAL_SAM/vgg16_v3/" + image_path + ".png")
         plt.setp(l.get_title(), multialignment='center')
-        plt.show()
+        # plt.show()
 
         #        "Relevance of label \n " + label + "\n out of " + r"$\bf{" "%.3f" % full_relevance + "}$" "\n",
         # loc='center left', bbox_to_anchor=(0, 0.5), fancybox=True, shadow=True, fontsize=11,
@@ -245,15 +245,15 @@ class Illustrate:
         ax.axes.xaxis.set_ticklabels([])
         box = ax.get_position()
         ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-        l = ax.legend(custom_lines, relevances, title="Relevance of label \n " + label + "\n out of " + r"$\bf{" "%.3f" % full_relevance + "}$" "\n",
-                    loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True, fontsize=11,
-                    title_fontsize=11, alignment="center")
+        # l = ax.legend(custom_lines, relevances, title="Relevance of label \n " + label + "\n out of " + r"$\bf{" "%.3f" % full_relevance + "}$" "\n",
+        #             loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True, fontsize=11,
+        #             title_fontsize=11, alignment="center")
 
-        plt.setp(l.get_title(), multialignment='center')
+        # plt.setp(l.get_title(), multialignment='center')
         plt.imshow(data_3d)
-        plt.savefig("vgg16_reverse_LRP/" + image_name + "_heatmap.png")
-        plt.show()
-        # plt.clf()
+        plt.savefig("/Users/sophia/Documents/REVEAL_SAM/vgg16_v3/" + image_name + "_heatmap.png")
+        # plt.show()
+        plt.clf()
 
         # 
         # plt.show()              

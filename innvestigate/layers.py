@@ -423,6 +423,16 @@ class MoreThanZero(klayers.Layer):
     def call(self, inputs: Tensor, *_args, **_kwargs) -> Tensor:
         return kbackend.less(kbackend.constant(0), inputs)    
     
+class MoreThan(klayers.Layer):    
+    def call(self, inputs: Tensor, *_args, **_kwargs) -> Tensor:
+        a, b = inputs
+        return kbackend.less(b, a)    
+    
+
+class MoreThanThree(klayers.Layer):    
+    def call(self, inputs: Tensor, *_args, **_kwargs) -> Tensor:
+        return kbackend.less(kbackend.constant(5), inputs)        
+    
 class Not_Equal_Zero(klayers.Layer):
     def call(self, inputs: Tensor, *_args, **_kwargs) -> Tensor:
         y = tf.constant(0.0)
@@ -881,7 +891,13 @@ class ReduceMean(klayers.Layer):
     def call(self, inputs: Tensor, *_args, **_kwargs) -> Tensor:
         return tf.math.reduce_mean(inputs, axis=1, keepdims=False)
 
+class Expand_dim(klayers.Layer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
+    def call(self, inputs: Tensor, *_args, **_kwargs) -> Tensor:
+        return  tf.expand_dims(inputs, axis=0)
+    
 class Reshape(klayers.Layer):
     """Layer that reshapes tensor to the shape specified on init."""
 

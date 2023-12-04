@@ -261,65 +261,35 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
 
         if self.bias is not None:
 
-#             absolut = [ilayers.Absolut()([a]) for a in activator_relevances]    
+            ratio = [ilayers.Divide_no_nan()([a, activator_relevances[-1]]) for a in activator_relevances]
 
-#             log_of_ten = [ilayers.Log_Of_Ten()(a) for a in absolut]
+            # ratio = [ilayers.Absolut()([a]) for a in ratio]    
 
-#             not_equal = [ilayers.Not_Equal_Zero()(a) for a in absolut]
+            # ========================================================================================================
 
-#             log_of_ten = [ilayers.Where()([a, b, tf.constant(0.0)]) for a, b in zip(not_equal, log_of_ten)]
+            absolut_Ys = ilayers.Absolut()(_Ys)    
 
-#             squeezed_log = [ilayers.Squeeze()(a) for a in log_of_ten]
+            log_of_ten_Ys = ilayers.Log_Of_Ten()(absolut_Ys)
 
-#             more_than_zero = [ilayers.MoreThanZero()(a) for a in squeezed_log]
+            not_equal_Ys = ilayers.Not_Equal_Zero()(absolut_Ys)
 
-#             more_than_zero = [ilayers.Cast_To_Float()(a) for a in more_than_zero]
+            log_of_ten_Ys = ilayers.Where()([not_equal_Ys, log_of_ten_Ys, tf.constant(0.0)])[0]
 
-#             more_than_zero_relevance = [ilayers.Multiply()([a, b]) for a, b in zip(squeezed_log, more_than_zero)]
-
-#             mean_std =  [ilayers.Avg_Square()([a, b]) for a, b in zip(more_than_zero_relevance, more_than_zero)]
-
-#             ratio_norm = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(more_than_zero_relevance, mean_std)]
-
-#             # ratio_pos = [ilayers.Multiply()([a, mean_std[-1][1]]) for a in ratio_norm]
-#             ratio_pos = [ilayers.Multiply()([a, mean_std[-1]]) for a in ratio_norm]
-
-#             # ratio_pos = [ilayers.Add()([a, mean_std[-1][0]]) for a in ratio_pos]
-
-# # -------------------------------------------------------------------------------------------------------------------------
-#             less_than_zero = [ilayers.LessThanZero()(a) for a in squeezed_log]
-#             less_than_zero = [ilayers.Cast_To_Float()(a) for a in less_than_zero]
-
-#             less_than_zero_relevance = [ilayers.Multiply()([a, b]) for a, b in zip(squeezed_log, less_than_zero)]
-
-#             mean_std =  [ilayers.Avg_Square()([a, b]) for a, b in zip(less_than_zero_relevance, less_than_zero)]
-
-#             # relevance_zeroed = [ilayers.Substract()([a, b[0]]) for a, b in zip(less_than_zero_relevance, mean_std)]
-
-#             # ratio_norm = [ilayers.Divide_no_nan()([a, b[1]]) for a, b in zip(relevance_zeroed, mean_std)]
-#             ratio_norm = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(less_than_zero_relevance, mean_std)]
+            # mean_std_Ys =  ilayers.Avg_Square()([log_of_ten_Ys, casted_mask_the_zeros_list[-1]])
 
 
-#             # ratio_neg = [ilayers.Multiply()([a, mean_std[-1][1]]) for a in ratio_norm]
-#             ratio_neg = [ilayers.Multiply()([a, mean_std[-1]]) for a in ratio_norm]
+            more_than_zero_Ys = ilayers.MoreThanZero()(log_of_ten_Ys)
+
+            more_than_zero_Ys = ilayers.Cast_To_Float()(more_than_zero_Ys)
+
+            more_than_zero_relevance_Ys = ilayers.Multiply()([log_of_ten_Ys, more_than_zero_Ys])
+
+            mean_std_Ys =  ilayers.Avg_Square()([more_than_zero_relevance_Ys, more_than_zero_Ys])
+            
+          # ========================================================================================================
 
 
-#             # ratio_pos = [ilayers.Add()([a, mean_std[-1][0]]) for a in ratio_neg]
-
-#             ratio = [ilayers.Add()([a,b]) for a,b in zip(ratio_pos, ratio_neg)]
-
-        
-#  # -------------------------------------------------------------------------------------------------------------------------
-
-#             power = [ilayers.Power()(a) for a in ratio]
-
-#             scaler = [ilayers.Where()([a, b, tf.constant(0.0)]) for a, b in zip(not_equal, power)]
-
-            # ratio_non_abs = [ilayers.Divide_no_nan()([a, activator_relevances[-1]]) for a in activator_relevances]
-
-            # ratio = [ilayers.Absolut()([a]) for a in ratio_non_abs]  
-
-            absolut = [ilayers.Absolut()([a]) for a in activator_relevances]    
+            absolut = [ilayers.Absolut()([a]) for a in ratio]    
 
             log_of_ten = [ilayers.Log_Of_Ten()(a) for a in absolut]
 
@@ -329,209 +299,89 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
 
             squeezed_log = [ilayers.Squeeze()(a) for a in log_of_ten]
 
-            # more_than_zero = [ilayers.MoreThanZero()(a) for a in squeezed_log]
+            # mean_std =  [ilayers.Avg_Square()([a, b]) for a, b in zip(squeezed_log, casted_mask_the_zeros_list)]
 
-            # more_than_zero = [ilayers.Cast_To_Float()(a) for a in more_than_zero]
 
-            # more_than_zero_relevance = [ilayers.Multiply()([a, b]) for a, b in zip(squeezed_log, more_than_zero)]
+            more_than_zero = [ilayers.MoreThanZero()(a) for a in squeezed_log]
 
-            mean_std =  [ilayers.Avg_Square()([a, b]) for a, b in zip(squeezed_log, casted_mask_the_zeros_list)]
+            more_than_zero = [ilayers.Cast_To_Float()(a) for a in more_than_zero]
 
-            ratio_norm = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(squeezed_log, mean_std)]
+            more_than_zero_relevance = [ilayers.Multiply()([a, b]) for a, b in zip(squeezed_log, more_than_zero)]
 
-            # ratio_pos = [ilayers.Multiply()([a, mean_std[-1][1]]) for a in ratio_norm]
-            ratio = [ilayers.Multiply()([a, mean_std[-1]]) for a in ratio_norm]
+            mean_std =  [ilayers.Avg_Square()([a, b]) for a, b in zip(more_than_zero_relevance, more_than_zero)]
+
+            mean_std_more_than_one = [ilayers.MoreThan()([a, mean_std_Ys]) for a  in mean_std]
+
+            ratio_norm = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(more_than_zero_relevance, mean_std)]
+
+            ratio_norm = [ilayers.Multiply()([a, mean_std_Ys]) for a in ratio_norm]
+
+            ratio_pos = [ilayers.Where()([a, b, c]) for a, b, c in zip(mean_std_more_than_one, ratio_norm, more_than_zero_relevance)]
+
+            # ratio_pos = [ilayers.Multiply()([a, mean_std_Ys]) for a in ratio_norm]
+
+
+            # =========================NEGATIVE Biases===============================================================================
+
+
+            less_than_zero_Ys = ilayers.LessThanZero()(log_of_ten_Ys)
+
+            less_than_zero_Ys = ilayers.Cast_To_Float()(less_than_zero_Ys)
+
+            less_than_zero_relevance_Ys = ilayers.Multiply()([log_of_ten_Ys, less_than_zero_Ys])
+
+            mean_std_Ys =  ilayers.Avg_Square()([less_than_zero_relevance_Ys, less_than_zero_Ys])
+
+#           # ========================================================================================================
+
+
+
+            less_than_zero = [ilayers.LessThanZero()(a) for a in squeezed_log]
+
+            less_than_zero = [ilayers.Cast_To_Float()(a) for a in less_than_zero]
+
+            less_than_zero_relevance = [ilayers.Multiply()([a, b]) for a, b in zip(squeezed_log, less_than_zero)]
+
+            mean_std =  [ilayers.Avg_Square()([a, b]) for a, b in zip(less_than_zero_relevance, less_than_zero)]
+            
+            mean_std_more_than_one = [ilayers.MoreThan()([a, mean_std_Ys]) for a  in mean_std]
+
+            ratio_norm = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(less_than_zero_relevance, mean_std)]
+
+            ratio_norm = [ilayers.Multiply()([a, mean_std_Ys]) for a in ratio_norm]
+
+            scaler_neg = [ilayers.Where()([a, b, c]) for a, b, c in zip(mean_std_more_than_one, ratio_norm, less_than_zero_relevance)]
+
+            # ========================================================================================================
+
+
+            ratio = [ilayers.Add()([a, b]) for a, b in zip(ratio_pos, scaler_neg)]
+
+#             # ratio_pos = [ilayers.Multiply()([a, mean_std[-1][1]]) for a in ratio_norm]
+            # ratio = [ilayers.Multiply()([a, mean_std_Ys]) for a in ratio_norm]
 
             power = [ilayers.Power()(a) for a in ratio]
 
             scaler = [ilayers.Where()([a, b, tf.constant(0.0)]) for a, b in zip(not_equal, power)]
 
-            ratio = [ilayers.Divide_no_nan()([a, scaler[-1]]) for a in scaler]
+            scaler = [ilayers.Expand_dim()(a) for a in scaler]
 
-            # neg_act = [ilayers.LessThanZero(a) for a in activator_relevances]
+            # neg_bias = [ilayers.LessThanZero()(a) for a in weighted_bias]
 
-            # scaler = [ilayers.Where()([a, b, tf.constant(0.0)]) for a, b in zip(not_equal, power)]
-
-            # ratio_pos = [ilayers.Add()([a, mean_std[-1][0]]) for a in ratio_pos]
+            # scaler = [ilayers.Where()([a, -b, b]) for a, b in zip(neg_bias, scaler)]
 
 
-            weighted_bias = [ilayers.Multiply()([self.bias, a]) for a in ratio]
+            weighted_bias = [ilayers.Multiply()([self.bias, a]) for a in scaler]
 
             net_value = [ilayers.Add()([a, b]) for a, b in zip(activator_relevances, weighted_bias)]
 
             net_value = [ilayers.Multiply()([a, b]) for a, b in zip(net_value, casted_mask_the_zeros_list)]
 
-            # net_value = [tf.expand_dims(a, 0) for a in net_value]
-
-
-
-            # ratio_non_abs = [ilayers.Divide_no_nan()([a, activator_relevances[-1]]) for a in activator_relevances]
-
-            # absolut_ratio = [ilayers.Absolut()([a]) for a in ratio_non_abs]    
-
-            # log_of_ten_ratio = [ilayers.Log_Of_Ten()(a) for a in absolut_ratio]
-
-            # not_equal_ratio = [ilayers.Not_Equal_Zero()(a) for a in absolut_ratio]
-
-            # log_of_ten_ratio = [ilayers.Where()([a, b, tf.constant(0.0)]) for a, b in zip(not_equal_ratio, log_of_ten_ratio)]
-
-            # squeezed_log_ratio = [ilayers.Squeeze()(a) for a in log_of_ten_ratio]
-
-            # more_than_zero_ratio = [ilayers.MoreThanZero()(a) for a in squeezed_log_ratio]
-
-            # more_than_zero_ratio_mask = [ilayers.Cast_To_Float()(a) for a in more_than_zero_ratio]
-            # # squeezed_log_ratio rather than more than zero
-
-            # more_than_zero_ratio = [ilayers.Multiply()([a, b]) for a, b in zip(squeezed_log_ratio, more_than_zero_ratio_mask)]
-
-            # mean_std_ratio =  [ilayers.Avg_Square()([a, b]) for a, b in zip(more_than_zero_ratio, more_than_zero_ratio_mask)]
-
-            # abs_act = ilayers.Absolut()([activator_relevances[-1]])
-
-            # log_of_ten = ilayers.Log_Of_Ten()(abs_act)
-
-            # not_equal = ilayers.Not_Equal_Zero()(abs_act)
-
-            # log_of_ten = ilayers.Where()([not_equal, log_of_ten, tf.constant(0.0)])
-
-            # squeezed_log = ilayers.Squeeze()(log_of_ten)
-
-            # more_than_zero = ilayers.MoreThanZero()(squeezed_log)
-
-            # more_than_zero = ilayers.Cast_To_Float()(more_than_zero)
-
-            # more_than_zero_relevance = ilayers.Multiply()([squeezed_log, more_than_zero])
-
-            # mean_std_act =  ilayers.Avg_Square()([more_than_zero_relevance, more_than_zero])
-
-            # less_than =  [ilayers.LessThan()([a, mean_std_act]) for a in mean_std_ratio]
-
-            # ratio_norm = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(more_than_zero_ratio, mean_std_ratio)]
-
-            # log_of_ten = [ilayers.Where()([a, c, b]) for a, b, c in zip(less_than, ratio_norm, more_than_zero_ratio)]
-
-            # ratio_pos = [ilayers.Multiply()([a, mean_std_act]) for a in log_of_ten]
-
-            # ratio_pos = [ilayers.Where()([a, c, b]) for a, b, c in zip(less_than, ratio_pos, more_than_zero_ratio)]
-
-            # less_than_zero_ratio_bool = [ilayers.LessThanZero()(a) for a in squeezed_log_ratio]
-                
-            # less_than_zero_mask = [ilayers.Cast_To_Float()(a) for a in less_than_zero_ratio_bool]
-
-            # less_than_zero_ratio = [ilayers.Multiply()([a, b]) for a, b in zip(squeezed_log_ratio, less_than_zero_mask)]
-
-            # mean_std_ratio =  [ilayers.Avg_Square()([a, b]) for a, b in zip(less_than_zero_ratio, less_than_zero_mask)]
-
-            # less_than_zero = ilayers.LessThanZero()(squeezed_log)
-
-            # less_than_zero = ilayers.Cast_To_Float()(less_than_zero)
-
-            # less_than_zero_relevance = ilayers.Multiply()([squeezed_log, less_than_zero])
-
-            # mean_std_act =  ilayers.Avg_Square()([less_than_zero_relevance, less_than_zero])
-
-            # more_than =  [ilayers.LessThan()([a, mean_std_act]) for a in mean_std_ratio]
-
-            # ratio_norm = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(less_than_zero_ratio, mean_std_ratio)]
-
-            # log_of_ten = [ilayers.Where()([a, c, b]) for a, b, c in zip(more_than, ratio_norm, less_than_zero_ratio)]
-
-            # ratio_neg = [ilayers.Multiply()([a, mean_std_act]) for a in log_of_ten]
-
-            # ratio_neg = [ilayers.Where()([a, c, b]) for a, b, c in zip(more_than, ratio_neg, less_than_zero_ratio)]
-
-            # ratio = [ilayers.Where()([a, c, b]) for a, b, c in zip(less_than_zero_ratio_bool, ratio_pos, ratio_neg)]
-
-            # power = [ilayers.Power()(a) for a in ratio]
-
-            # scaler = [ilayers.Where()([a, b, tf.constant(0.0)]) for a, b in zip(not_equal_ratio, power)]
-
-#             absolut = [ilayers.Absolut()([a]) for a in activator_relevances]    
-
-#             log_of_ten = [ilayers.Log_Of_Ten()(a) for a in absolut]
-
-#             not_equal = [ilayers.Not_Equal_Zero()(a) for a in absolut]
-
-#             log_of_ten = [ilayers.Where()([a, b, tf.constant(0.0)]) for a, b in zip(not_equal, log_of_ten)]
-
-#             squeezed_log = [ilayers.Squeeze()(a) for a in log_of_ten]
-
-#             more_than_zero = [ilayers.MoreThanZero()(a) for a in squeezed_log]
-
-#             more_than_zero = [ilayers.Cast_To_Float()(a) for a in more_than_zero]
-
-#             more_than_zero_relevance = [ilayers.Multiply()([a, b]) for a, b in zip(squeezed_log, more_than_zero)]
-
-#             mean_std =  [ilayers.Avg_Square()([a, b]) for a, b in zip(more_than_zero_relevance, more_than_zero)]
+             
+            # weighted_bias = [ilayers.Multiply()([self.bias, a]) for a in ratio]   
             
-#             # relevance_zeroed = [ilayers.Substract()([a, b[0]]) for a, b in zip(squeezed_log, mean_std)]
-
-
-#             ratio_norm = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(more_than_zero_relevance, mean_std)]
-#             # ratio_norm = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(more_than_zero_relevance, mean_std)]
-
-#             # ratio = [ilayers.Multiply()([a, mean_std[-1]]) for a in ratio_norm]
-#             ratio_pos = [ilayers.Multiply()([a, mean_std[-1]]) for a in ratio_norm]
-
-#             # ratio_pos = [ilayers.Add()([a, mean_std[-1][0]]) for a in ratio_pos]
-
-# # -------------------------------------------------------------------------------------------------------------------------
-#             less_than_zero = [ilayers.LessThanZero()(a) for a in squeezed_log]
-#             less_than_zero = [ilayers.Cast_To_Float()(a) for a in less_than_zero]
-
-#             less_than_zero_relevance = [ilayers.Multiply()([a, b]) for a, b in zip(squeezed_log, less_than_zero)]
-
-#             mean_std =  [ilayers.Avg_Square()([a, b]) for a, b in zip(less_than_zero_relevance, less_than_zero)]
-
-#             # relevance_zeroed = [ilayers.Substract()([a, b[0]]) for a, b in zip(less_than_zero_relevance, mean_std)]
-
-#             # ratio_norm = [ilayers.Divide_no_nan()([a, b[1]]) for a, b in zip(relevance_zeroed, mean_std)]
-#             ratio_norm = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(less_than_zero_relevance, mean_std)]
-
-
-#             # ratio_neg = [ilayers.Multiply()([a, mean_std[-1][1]]) for a in ratio_norm]
-#             ratio_neg = [ilayers.Multiply()([a, mean_std[-1]]) for a in ratio_norm]
-
-
-#             # ratio_pos = [ilayers.Add()([a, mean_std[-1][0]]) for a in ratio_neg]
-
-#             ratio = [ilayers.Add()([a,b]) for a,b in zip(ratio_pos, ratio_neg)]
-
-        
-# #  -------------------------------------------------------------------------------------------------------------------------
-
-#             power = [ilayers.Power()(a) for a in ratio]
-
-#             scaler = [ilayers.Where()([a, b, tf.constant(0.0)]) for a, b in zip(not_equal, power)]
-
-#             ratio_non_abs = [ilayers.Divide_no_nan()([a, scaler[-1]]) for a in scaler]
-
-#             ratio = [ilayers.Absolut()([a]) for a in ratio_non_abs]    
-
-#             weighted_bias = [ilayers.Multiply()([self.bias, a]) for a in ratio]
-
-#             weighted_bias = [tf.expand_dims(a, 0) for a in weighted_bias]
-
-#             net_value = [ilayers.Add()([a,b]) for a,b in zip(activator_relevances, weighted_bias)]
-
-#             # ratio_non_abs = [ilayers.Divide_no_nan()([a, activator_relevances[-1]]) for a in activator_relevances]
-
-#             # ratio = [ilayers.Absolut()([a]) for a in ratio_non_abs]  
-  
-
-            # weighted_bias = [ilayers.Multiply()([self.bias, a]) for a in scaler]
-
-# #             # net_value = [ilayers.Add()([tf.expand_dims(a, 0), b]) for a, b in zip(scaler, weighted_bias)]
-# #             # scaler = scaler[:-1]
-# #             # scaler.append(weighted_bias_last)
-# #             net_value = [ilayers.Add()([a, b]) for a, b in zip(activator_relevances, scaler)]
-# #             net_value = [ilayers.Multiply()([a, b]) for a, b in zip(net_value, casted_mask_the_zeros_list)]
-
-#             # net_value = [ilayers.Add()([a, self.bias]) for a in activator_relevances]
-# # 
 
             # net_value = [ilayers.Add()([a, b]) for a, b in zip(activator_relevances, weighted_bias)]
-#             # net_value = [ilayers.Add()([tf.expand_dims(a, 0), b]) for a, b in zip(scaler, weighted_bias)]
             net_value = [ilayers.Concat(axis=0)(net_value)]
             # scale_log = [ilayers.Concat(axis=0)(relevance)]
 

@@ -164,7 +164,7 @@ def retrieve(a, x, size):
         masks_two_channel.append(masks[i].astype(np.bool_))
 
 
-    masks_two_channel = random_clusters.random_clusters(x, masks_two_channel)
+    masks_two_channel = random_clusters.inverted_masks(x, masks_two_channel)
 
     masks_resized = []
     for ret in masks_two_channel:

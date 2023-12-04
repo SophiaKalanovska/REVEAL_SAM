@@ -1336,7 +1336,7 @@ def reverse_model(
                     id(Y) for Y in Ys if id(Y) in stop_mapping_at_ids
                 ]
 
-                _print(f"[NID: {_nid}] Reverse layer-node {layer}")
+                print(f"[NID: {_nid}] Reverse layer-node {layer}")
                 reverse_mapping = initialized_reverse_mappings[layer]
                 percentage_change = [get_percent_tensor(xs)
                                                           for xs in Xs]

@@ -42,8 +42,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 import time
-import argparse
-import pickle
+# import argparse
+# import pickle
 
 
 ###############################################################################
@@ -70,7 +70,7 @@ if __name__ == "__main__":
     #     sys.exit(1)
 
     # image_path = sys.argv[1]
-    image_path = "SAM1.JPEG"
+    image_path = "ILSVRC2012_val_00000001.JPEG"
 
     # Process each filename using the method
 
@@ -82,13 +82,14 @@ if __name__ == "__main__":
     print(image_path)
 
 
-    # image_size = 224
-    image_size = 299
+    image_size = 224
+    # image_size = 299
     image = utils.load_image(
         os.path.join(base_dir, "ILSVRC", image_path), image_size)
     image_new = image[:, :, :3]
 
-    CHECKPOINT_PATH = "sam_vit_h_4b8939.pth"
+    # CHECKPOINT_PATH = "sam_vit_h_4b8939.pth"
+    CHECKPOINT_PATH = "/Users/sophia/Documents/REVEAL_SAM/sam_vit_h_4b8939.pth"
     DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     MODEL_TYPE = "vit_h"
 
@@ -107,15 +108,15 @@ if __name__ == "__main__":
     mask_annotator = sv.MaskAnnotator()
     detections = sv.Detections.from_sam(result)
 
-    # model_call = vgg16
+    model_call = vgg16
     # model_call = vgg19
-    model_call = inception
+    # model_call = inception
     # model_call = res
 
-    # model, preprocess = vgg16.VGG16(), vgg16.preprocess_input
+    model, preprocess = vgg16.VGG16(), vgg16.preprocess_input
     # model, preprocess = res.ResNet50(), res.preprocess_input
     # model, preprocess = vgg19.VGG19(), vgg19.preprocess_input
-    model, preprocess = inception.InceptionV3(), inception.preprocess_input
+    # model, preprocess = inception.InceptionV3(), inception.preprocess_input
 
     # Strip softmax layerexamples
 
@@ -171,9 +172,13 @@ if __name__ == "__main__":
 
     sorted_mask, sorted_masks_3D = innvestigate.masks_from_heatmap.rank_and_sort_masks(masks, masks_from_heatmap3D, masks_from_heatmap3D_pixels)
     
-    sorted_mask, sorted_masks_3D = sorted_mask[:10], sorted_masks_3D[:10]
+    sorted_mask, sorted_masks_3D = sorted_mask[:9], sorted_masks_3D[:9]
+    sorted_mask = [sorted_mask[i, ...] for i in range(9)]
+    sorted_masks_3D = [sorted_masks_3D[i, ...] for i in range(9)]
+    sorted_mask.append(np.ones_like(sorted_mask[0]))
+    sorted_masks_3D.append(np.ones_like(sorted_masks_3D[0]))
 
-    analyzer = innvestigate.create_analyzer("reveal.alpha_2_beta_1", model, **{"masks": masks_from_heatmap3D_pixels})
+    analyzer = innvestigate.create_analyzer("reveal.alpha_2_beta_1", model, **{"masks": sorted_masks_3D})
 
 
     # # # Apply analyzer w.r.t. maximum activated output-neuron
@@ -182,5 +187,5 @@ if __name__ == "__main__":
     # print("--- %s minutes ---" % ((time.time() - start_time) / 60))
 
     illustrate = innvestigate.illustrate_clusters.Illustrate()
-    illustrate.mask_to_input_relevance_of_mask([random.randint(0, 100) for _ in range(len(sorted_mask)+2)], sorted_masks_3D, scene_colour = copy.copy(image_rgb), detections= detections, masks = sorted_mask)
-    # illustrate.mask_to_input_relevance_of_pixels([random.randint(0, 100) for _ in range(len(masks_pixels)+2)], masks_from_heatmap3D_pixels, label = predictions[0][0][1], image_name= image_path)
+    illustrate.mask_to_input_relevance_of_mask(relevance, sorted_masks_3D, scene_colour = copy.copy(image_rgb), detections= detections, masks = sorted_mask, image_path = image_path, label=predictions[0][0][1])
+    illustrate.mask_to_input_relevance_of_pixels([random.randint(0, 100) for _ in range(len(masks_pixels)+2)], masks_from_heatmap3D_pixels, label = predictions[0][0][1], image_name= image_path)
