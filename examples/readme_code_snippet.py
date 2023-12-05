@@ -65,12 +65,12 @@ if __name__ == "__main__":
 
     # List all files in the folder
     # filenames = os.listdir(folder_path)
-    # if len(sys.argv) < 2:
-    #     print("Usage: python my_program.py <image_path>")
-    #     sys.exit(1)
+    if len(sys.argv) < 2:
+        print("Usage: python my_program.py <image_path>")
+        sys.exit(1)
 
-    # image_path = sys.argv[1]
-    image_path = "ILSVRC2012_val_00000001.JPEG"
+    image_path = sys.argv[1]
+    # image_path = "ILSVRC2012_val_00000016.JPEG"
 
     # Process each filename using the method
 

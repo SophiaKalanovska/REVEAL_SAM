@@ -260,36 +260,31 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
         scale_log = None
 
         if self.bias is not None:
-
             ratio = [ilayers.Divide_no_nan()([a, activator_relevances[-1]]) for a in activator_relevances]
+            ratio = [ilayers.Absolut()([a]) for a in ratio]
 
-            # ratio = [ilayers.Absolut()([a]) for a in ratio]    
+            weighted_bias = [ilayers.Multiply()([self.bias, a]) for a in ratio]
 
-            # ========================================================================================================
+            # rel = [ilayers.Colapse_Sum()(a) for a in activator_relevances]
+            # ratio = [ilayers.Divide_no_nan()([a, rel[-1]]) for a in rel]
+            # ratio = [ilayers.Absolut()([a]) for a in ratio]
+            # mean_bias = [ilayers.Multiply()([self.bias, a]) for a in ratio]
+
+  # ========================================================================================================
 
             absolut_Ys = ilayers.Absolut()(_Ys)    
 
             log_of_ten_Ys = ilayers.Log_Of_Ten()(absolut_Ys)
 
-            not_equal_Ys = ilayers.Not_Equal_Zero()(absolut_Ys)
+            not_equal_Ys = ilayers.Not_Equal_Zero()(absolut_Ys)            
 
             log_of_ten_Ys = ilayers.Where()([not_equal_Ys, log_of_ten_Ys, tf.constant(0.0)])[0]
 
-            # mean_std_Ys =  ilayers.Avg_Square()([log_of_ten_Ys, casted_mask_the_zeros_list[-1]])
+            std_Ys = ilayers.Reduce_std_sparse()([log_of_ten_Ys, casted_mask_the_zeros_list[-1]])
 
+  # ========================================================================================================
 
-            more_than_zero_Ys = ilayers.MoreThanZero()(log_of_ten_Ys)
-
-            more_than_zero_Ys = ilayers.Cast_To_Float()(more_than_zero_Ys)
-
-            more_than_zero_relevance_Ys = ilayers.Multiply()([log_of_ten_Ys, more_than_zero_Ys])
-
-            mean_std_Ys =  ilayers.Avg_Square()([more_than_zero_relevance_Ys, more_than_zero_Ys])
-            
-          # ========================================================================================================
-
-
-            absolut = [ilayers.Absolut()([a]) for a in ratio]    
+            absolut = [ilayers.Absolut()([a]) for a in weighted_bias]    
 
             log_of_ten = [ilayers.Log_Of_Ten()(a) for a in absolut]
 
@@ -299,89 +294,37 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
 
             squeezed_log = [ilayers.Squeeze()(a) for a in log_of_ten]
 
-            # mean_std =  [ilayers.Avg_Square()([a, b]) for a, b in zip(squeezed_log, casted_mask_the_zeros_list)]
-
-
-            more_than_zero = [ilayers.MoreThanZero()(a) for a in squeezed_log]
-
-            more_than_zero = [ilayers.Cast_To_Float()(a) for a in more_than_zero]
-
-            more_than_zero_relevance = [ilayers.Multiply()([a, b]) for a, b in zip(squeezed_log, more_than_zero)]
-
-            mean_std =  [ilayers.Avg_Square()([a, b]) for a, b in zip(more_than_zero_relevance, more_than_zero)]
-
-            mean_std_more_than_one = [ilayers.MoreThan()([a, mean_std_Ys]) for a  in mean_std]
-
-            ratio_norm = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(more_than_zero_relevance, mean_std)]
-
-            ratio_norm = [ilayers.Multiply()([a, mean_std_Ys]) for a in ratio_norm]
-
-            ratio_pos = [ilayers.Where()([a, b, c]) for a, b, c in zip(mean_std_more_than_one, ratio_norm, more_than_zero_relevance)]
-
-            # ratio_pos = [ilayers.Multiply()([a, mean_std_Ys]) for a in ratio_norm]
-
-
-            # =========================NEGATIVE Biases===============================================================================
-
-
-            less_than_zero_Ys = ilayers.LessThanZero()(log_of_ten_Ys)
-
-            less_than_zero_Ys = ilayers.Cast_To_Float()(less_than_zero_Ys)
-
-            less_than_zero_relevance_Ys = ilayers.Multiply()([log_of_ten_Ys, less_than_zero_Ys])
-
-            mean_std_Ys =  ilayers.Avg_Square()([less_than_zero_relevance_Ys, less_than_zero_Ys])
-
-#           # ========================================================================================================
-
-
-
-            less_than_zero = [ilayers.LessThanZero()(a) for a in squeezed_log]
-
-            less_than_zero = [ilayers.Cast_To_Float()(a) for a in less_than_zero]
-
-            less_than_zero_relevance = [ilayers.Multiply()([a, b]) for a, b in zip(squeezed_log, less_than_zero)]
-
-            mean_std =  [ilayers.Avg_Square()([a, b]) for a, b in zip(less_than_zero_relevance, less_than_zero)]
+            std_bias =  [ilayers.Reduce_std_sparse()([a, b]) for a, b in zip(squeezed_log, casted_mask_the_zeros_list)]
             
-            mean_std_more_than_one = [ilayers.MoreThan()([a, mean_std_Ys]) for a  in mean_std]
-
-            ratio_norm = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(less_than_zero_relevance, mean_std)]
-
-            ratio_norm = [ilayers.Multiply()([a, mean_std_Ys]) for a in ratio_norm]
-
-            scaler_neg = [ilayers.Where()([a, b, c]) for a, b, c in zip(mean_std_more_than_one, ratio_norm, less_than_zero_relevance)]
-
-            # ========================================================================================================
+  # ========================================================================================================
 
 
-            ratio = [ilayers.Add()([a, b]) for a, b in zip(ratio_pos, scaler_neg)]
 
-#             # ratio_pos = [ilayers.Multiply()([a, mean_std[-1][1]]) for a in ratio_norm]
-            # ratio = [ilayers.Multiply()([a, mean_std_Ys]) for a in ratio_norm]
+            mean_std_more_than_one = [ilayers.MoreThan()([a, std_Ys]) for a  in std_bias]
 
-            power = [ilayers.Power()(a) for a in ratio]
+            ratio_norm = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(squeezed_log, std_bias)]
+
+            ratio_norm = [ilayers.Multiply()([a, std_Ys]) for a in ratio_norm]
+
+            new_bias = [ilayers.Where()([a, b, c]) for a, b, c in zip(mean_std_more_than_one, ratio_norm, squeezed_log)]
+
+# ========================================================================================================
+
+
+            power = [ilayers.Power()(a) for a in new_bias]
 
             scaler = [ilayers.Where()([a, b, tf.constant(0.0)]) for a, b in zip(not_equal, power)]
 
             scaler = [ilayers.Expand_dim()(a) for a in scaler]
 
-            # neg_bias = [ilayers.LessThanZero()(a) for a in weighted_bias]
+            neg_bias = [ilayers.LessThanZero()(a) for a in weighted_bias]
 
-            # scaler = [ilayers.Where()([a, -b, b]) for a, b in zip(neg_bias, scaler)]
+            scaler = [ilayers.Where()([a, -b, b]) for a, b in zip(neg_bias, scaler)]
 
 
-            weighted_bias = [ilayers.Multiply()([self.bias, a]) for a in scaler]
+            net_value = [ilayers.Add()([a, b]) for a, b in zip(activator_relevances, scaler)]
 
-            net_value = [ilayers.Add()([a, b]) for a, b in zip(activator_relevances, weighted_bias)]
 
-            net_value = [ilayers.Multiply()([a, b]) for a, b in zip(net_value, casted_mask_the_zeros_list)]
-
-             
-            # weighted_bias = [ilayers.Multiply()([self.bias, a]) for a in ratio]   
-            
-
-            # net_value = [ilayers.Add()([a, b]) for a, b in zip(activator_relevances, weighted_bias)]
             net_value = [ilayers.Concat(axis=0)(net_value)]
             # scale_log = [ilayers.Concat(axis=0)(relevance)]
 
@@ -394,6 +337,7 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
         #         layer = tf.keras.layers.Activation(self._layer.get_config()["activation"])
         #         net_value = ibackend.apply(layer, net_value)
         #     else:   
+        #         net_value = net_value
 
         mask_the_zeros = ilayers.Not_Equal_Zero()(_Ys)
 
@@ -403,7 +347,7 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
 
         if scale_log == None:
             scale_log = [ilayers.Divide_no_nan()([a, _Ys[-1]]) for a in net_value]
-        return net_value, scale_log
+        return net_value, weighted_bias
 
 
 class AlphaBetaIgnoreBiasRule(AlphaBetaRule):

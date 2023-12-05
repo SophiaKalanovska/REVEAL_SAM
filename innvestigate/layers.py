@@ -429,6 +429,11 @@ class MoreThan(klayers.Layer):
         return kbackend.less(b, a)    
     
 
+class MoreThanOne(klayers.Layer):    
+    def call(self, inputs: Tensor, *_args, **_kwargs) -> Tensor:
+        return kbackend.less(kbackend.constant(1), inputs)        
+    
+
 class MoreThanThree(klayers.Layer):    
     def call(self, inputs: Tensor, *_args, **_kwargs) -> Tensor:
         return kbackend.less(kbackend.constant(5), inputs)        
@@ -577,6 +582,40 @@ class Reduce_var_to_input_sparse(klayers.Layer):
         var_1 = tf.math.divide_no_nan(sum, n)
 
         return var_1
+    
+class Colapse_Sum(klayers.Layer):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
+
+    def call(self, inputs: Tensor, *_args, **_kwargs) -> Tensor:
+        shape = inputs.shape
+
+        if len(shape) != 1:
+            a = Reshape([-1, shape[-1]])(inputs)
+            sum = Reduce_Sum()(a)
+        else:
+            sum = Reduce_Sum()(inputs)
+        return sum
+    
+
+class Colapse_Sum_Act(klayers.Layer):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
+
+    def call(self, inputs: Tensor, *_args, **_kwargs) -> Tensor:
+        a, b = inputs
+       
+
+        new_a = Multiply()([a, b])
+        shape = new_a.shape
+        if len(shape) != 1:
+            new_a = Reshape([-1, shape[-1]])(new_a)
+            sum = Reduce_Sum()(new_a)
+        else:
+            sum = Reduce_Sum()(new_a)
+        return sum    
 
 
 class Avg_Square(klayers.Layer):
@@ -631,7 +670,7 @@ class Reduce_std_sparse(klayers.Layer):
 
         n = Reduce_Sum()(b)
 
-        if len(mean.shape) != 1:
+        if len(mean.shape) >= 1:
             mean = Reshape(shape =[-1, shape[-1]])(mean)
 
         squared_difference_1 = Squared_difference()([a, mean])

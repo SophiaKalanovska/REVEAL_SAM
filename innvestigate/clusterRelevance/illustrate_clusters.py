@@ -64,11 +64,11 @@ class Illustrate:
                     # 71: np.array([randrange(255),randrange(255),randrange(255)]),
                     # 73: np.array([randrange(255),randrange(255),randrange(255)]),
 
-                    3: np.array([204, 0, 0]), #dark red 
-                    5: np.array([255, 0, 0]), # red
+                    3: np.array([255, 0, 0]), # red 
+                    5: np.array([253, 44, 129]), # light red
                     #  7: np.array([255, 102, 102]), # light red
-                    11: np.array([255,128,0]),# orange
-                    13: np.array([255,178,102]),# light orange
+                    11: np.array([255, 140, 0]),# orange
+                    13: np.array([251, 205, 11]),# light orange
                     17: np.array([255, 255, 0]),# yellow
                     19: np.array([0,204,0]), # green
                     23: np.array([51, 255, 153]), # blueish green
