@@ -648,6 +648,42 @@ class Avg_Square(klayers.Layer):
 
         return std
     
+class ShuffledChannelsLayer(tf.keras.layers.Layer):
+    def __init__(self, seed=0, **kwargs):
+        super(ShuffledChannelsLayer, self).__init__(**kwargs)
+        self.seed = seed
+
+    def call(self, inputs):
+        shuffled_channels = []
+
+        # Iterate over each channel
+        if len(inputs.shape) > 2:
+            for i in range(inputs.shape[-1]):
+                # Extract the channel
+                channel = inputs[:, :, :, i]
+
+                # Flatten, shuffle, and then reshape the channel
+                flattened_channel = tf.reshape(channel, [-1])
+                shuffled_flattened_channel = tf.random.shuffle(flattened_channel, seed=self.seed)
+                reshaped_dims = inputs.shape[:-1].as_list()
+                reshaped_dims.append(1)
+                reshaped_channel = tf.reshape(shuffled_flattened_channel, reshaped_dims)
+
+                # Append the shuffled channel to the list
+                shuffled_channels.append(reshaped_channel)
+        else:
+            
+                shuffled_flattened_channel = tf.random.shuffle(inputs)    
+                reshaped_channel = tf.reshape(shuffled_flattened_channel, inputs.shape)
+
+                # Append the shuffled channel to the list
+                shuffled_channels.append(reshaped_channel)
+
+        # Stack the shuffled channels to reconstruct the tensor
+        shuffled_tensor = tf.concat(shuffled_channels, axis=-1)
+
+        return shuffled_tensor    
+    
 class Reduce_std_sparse(klayers.Layer):
     def __init__(self, mean = None, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

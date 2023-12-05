@@ -261,16 +261,21 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
 
         if self.bias is not None:
             ratio = [ilayers.Divide_no_nan()([a, activator_relevances[-1]]) for a in activator_relevances]
+            weighted_bias = [ilayers.Multiply()([self.bias, a]) for a in ratio]
             # ratio = [ilayers.Absolut()([a]) for a in ratio]
 
             # rel = [ilayers.Colapse_Sum()(a) for a in activator_relevances]
             # ratio = [ilayers.Divide_no_nan()([a, rel[-1]]) for a in rel]
             # ratio = [ilayers.Absolut()([a]) for a in ratio]
             # mean_bias = [ilayers.Multiply()([self.bias, a]) for a in ratio]
+ # ========================================================================================================
+            # Stack the shuffled channels to reconstruct the tensor
+            shuffled_tensor = ilayers.ShuffledChannelsLayer()(activator_relevances[-1])    
 
   # ========================================================================================================
+            mixed_and_matched =  ilayers.Substract()([_Ys[0], shuffled_tensor])    
 
-            absolut_Ys = ilayers.Absolut()([activator_relevances[-1]])    
+            absolut_Ys = ilayers.Absolut()([mixed_and_matched])    
 
             log_of_ten_Ys = ilayers.Log_Of_Ten()(absolut_Ys)
 
@@ -282,7 +287,7 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
 
   # ========================================================================================================
 
-            absolut = [ilayers.Absolut()([a]) for a in ratio]    
+            absolut = [ilayers.Absolut()([a]) for a in weighted_bias]    
 
             log_of_ten = [ilayers.Log_Of_Ten()(a) for a in absolut]
 
@@ -315,14 +320,14 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
 
             scaler = [ilayers.Expand_dim()(a) for a in scaler]
 
-            # neg_bias = [ilayers.LessThanZero()(a) for a in weighted_bias]
+            neg_bias = [ilayers.LessThanZero()(a) for a in weighted_bias]
 
-            # scaler = [ilayers.Where()([a, -b, b]) for a, b in zip(neg_bias, scaler)]
+            scaler = [ilayers.Where()([a, -b, b]) for a, b in zip(neg_bias, scaler)]
 
-            weighted_bias = [ilayers.Multiply()([self.bias, a]) for a in scaler]
+            # weighted_bias = [ilayers.Multiply()([self.bias, a]) for a in scaler]
 
 
-            net_value = [ilayers.Add()([a, b]) for a, b in zip(activator_relevances, weighted_bias)]
+            net_value = [ilayers.Add()([a, b]) for a, b in zip(activator_relevances, scaler)]
 
 
             net_value = [ilayers.Concat(axis=0)(net_value)]

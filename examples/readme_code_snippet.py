@@ -70,9 +70,9 @@ if __name__ == "__main__":
         sys.exit(1)
 
     image_path = sys.argv[1]
-    # # image_path = "ILSVRC2012_val_00000015.JPEG"
+    # image_path = "ILSVRC2012_val_00000005.JPEG"
     # # scale
-    # # image_path = "ILSVRC2012_val_00000016.JPEG"
+    # image_path = "ILSVRC2012_val_00000016.JPEG"
     # # mean
     # # image_path = "ILSVRC2012_val_00000021.JPEG"
     # # mean
