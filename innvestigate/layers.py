@@ -730,6 +730,8 @@ class Add(klayers.Layer):
             raise ValueError("A `add` layer should be called on exactly 2 inputs")
         a, b = inputs
         return tf.math.add(a, b)
+    
+    
 class Add_One(klayers.Layer):
     def call(self, inputs: Tensor, *_args, **_kwargs) -> Tensor:
         return tf.math.add(inputs, 1)

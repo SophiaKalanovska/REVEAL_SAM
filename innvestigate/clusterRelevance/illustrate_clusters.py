@@ -67,7 +67,7 @@ class Illustrate:
                     3: np.array([255, 0, 0]), # red 
                     5: np.array([253, 44, 129]), # light red
                     #  7: np.array([255, 102, 102]), # light red
-                    11: np.array([255, 140, 0]),# orange
+                    11: np.array([251, 118, 11]),# orange
                     13: np.array([251, 205, 11]),# light orange
                     17: np.array([255, 255, 0]),# yellow
                     19: np.array([0,204,0]), # green
