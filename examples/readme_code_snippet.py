@@ -21,6 +21,7 @@ from segment_anything import sam_model_registry
 import cv2
 from segment_anything import SamAutomaticMaskGenerator
 import supervision as sv
+import pandas as pd
 
 
 file_dir = os.path.dirname(__file__)
@@ -91,111 +92,151 @@ if __name__ == "__main__":
     # image_name = "bike_balloons.jpeg"
     print(image_path)
 
-
+    images = []
     image_size = 224
     # image_size = 299
     image = utils.load_image(
         os.path.join(base_dir, "ILSVRC", image_path), image_size)
-    image_new = image[:, :, :3]
+    image = image[:, :, :3]
+    images.append(image)
 
-    # CHECKPOINT_PATH = "sam_vit_h_4b8939.pth"
-    CHECKPOINT_PATH = "/Users/sophia/Documents/REVEAL_SAM/sam_vit_h_4b8939.pth"
-    DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    MODEL_TYPE = "vit_h"
+    images.append(innvestigate.faithfulnessCheck.noise_and_blur.gaussian_blur(image))
+    images.append(innvestigate.faithfulnessCheck.noise_and_blur.add_gaussian_noise(image,  0, 0.01))
+    images.append(innvestigate.faithfulnessCheck.noise_and_blur.add_gaussian_noise(image, 0, 0.9))
 
-    sam = sam_model_registry[MODEL_TYPE](checkpoint=CHECKPOINT_PATH)
-    sam.to(device=DEVICE)
+    explanations = []
+    lrp = []
 
-    mask_generator = SamAutomaticMaskGenerator(sam)
-    IMAGE_PATH = base_dir + "/images/"+ image_path
+    for image_new in images:
 
-    image_bgr = np.asarray(image_new, dtype=np.uint8)
-    image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
-    result = mask_generator.generate(image_rgb)
+        # CHECKPOINT_PATH = "sam_vit_h_4b8939.pth"
+        CHECKPOINT_PATH = "/Users/sophia/Documents/REVEAL_SAM/sam_vit_h_4b8939.pth"
+        DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        MODEL_TYPE = "vit_h"
 
+        sam = sam_model_registry[MODEL_TYPE](checkpoint=CHECKPOINT_PATH)
+        sam.to(device=DEVICE)
 
+        mask_generator = SamAutomaticMaskGenerator(sam)
+        IMAGE_PATH = base_dir + "/images/"+ image_path
 
-    mask_annotator = sv.MaskAnnotator()
-    detections = sv.Detections.from_sam(result)
-
-    model_call = vgg16
-    # model_call = vgg19
-    # model_call = inception
-    # model_call = res
-
-    model, preprocess = vgg16.VGG16(), vgg16.preprocess_input
-    # model, preprocess = res.ResNet50(), res.preprocess_input
-    # model, preprocess = vgg19.VGG19(), vgg19.preprocess_input
-    # model, preprocess = inception.InceptionV3(), inception.preprocess_input
-
-    # Strip softmax layerexamples
-
-    model = innvestigate.model_wo_softmax(model)
-    x = preprocess(image[None])
-
-    masks, masks_from_heatmap3D = innvestigate.masks_from_heatmap.retrieve(result, x, image_size)
+        image_bgr = np.asarray(image_new, dtype=np.uint8)
+        image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+        result = mask_generator.generate(image_rgb)
 
 
-    # Get model
 
-    # Create analyzer
+        mask_annotator = sv.MaskAnnotator()
+        detections = sv.Detections.from_sam(result)
 
-    # Add batch axis and preprocess
+        model_call = vgg16
+        # model_call = vgg19
+        # model_call = inception
+        # model_call = res
 
+        model, preprocess = vgg16.VGG16(), vgg16.preprocess_input
+        # model, preprocess = res.ResNet50(), res.preprocess_input
+        # model, preprocess = vgg19.VGG19(), vgg19.preprocess_input
+        # model, preprocess = inception.InceptionV3(), inception.preprocess_input
 
-    analyzer = innvestigate.create_analyzer("lrp.alpha_1_beta_0", model)
-    pr = model.predict_on_batch(x)
-    the_label_index = np.argmax(pr, axis=1)
-    predictions = model_call.decode_predictions(pr)
+        # Strip softmax layerexamples
 
-    # # distribute the relevance to the input layer
-    start_time = time.time()
-    a = analyzer.analyze(x)
-    # print("--- %s minutes ---" % ((time.time() - start_time) / 60))
+        model = innvestigate.model_wo_softmax(model)
+        x = preprocess(image[None])
 
-    # # Aggregate along color channels and normalize to [-1, 1]
-    # b = a.sum(axis=np.argmax(np.asarray(a.shape) == 3))
-    # b /= np.max(np.abs(b))
-
-    # # # Plot
-    # plt.imshow(b[0], cmap="seismic", clim=(-1, 1))
-    # plt.savefig("vgg16_heat_map/" + image_path + "_heatmap.png")
-    # # plt.show()
-    # plt.clf()
-    # # 
+        masks, masks_from_heatmap3D = innvestigate.masks_from_heatmap.retrieve(result, x, image_size)
 
 
-    # Plot in 3D
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111, projection='3d')
 
-    # x = np.linspace(0, 224, 224)
-    # y = np.linspace(0, 224, 224)
-    # X, Y = np.meshgrid(x, y)
-    # Z = b[0]
+        analyzer = innvestigate.create_analyzer("lrp.alpha_1_beta_0", model)
+        pr = model.predict_on_batch(x)
+        the_label_index = np.argmax(pr, axis=1)
+        predictions = model_call.decode_predictions(pr)
 
-    # ax.plot_surface(X, Y, Z, cmap='viridis')
+        # # distribute the relevance to the input layer
+        start_time = time.time()
+        a = analyzer.analyze(x)
 
-    # plt.show()
+        norm = innvestigate.faithfulnessCheck.calculate_distance.l2_normalize(a)
+        lrp.append(norm)
 
-    masks_pixels, masks_from_heatmap3D_pixels = innvestigate.masks_from_heatmap.retrieve_pixels(a, x, image_size, image_path)
 
-    sorted_mask, sorted_masks_3D = innvestigate.masks_from_heatmap.rank_and_sort_masks(masks, masks_from_heatmap3D, masks_from_heatmap3D_pixels)
+        masks_pixels, masks_from_heatmap3D_pixels = innvestigate.masks_from_heatmap.retrieve_pixels(a, x, image_size, image_path)
+
+        sorted_mask, sorted_masks_3D = innvestigate.masks_from_heatmap.rank_and_sort_masks(masks, masks_from_heatmap3D, masks_from_heatmap3D_pixels)
+        
+        sorted_mask, sorted_masks_3D = sorted_mask[:9], sorted_masks_3D[:9]
+        sorted_mask = [sorted_mask[i, ...] for i in range(9)]
+        sorted_masks_3D = [sorted_masks_3D[i, ...] for i in range(9)]
+        sorted_mask.append(np.ones_like(sorted_mask[0]))
+        sorted_masks_3D.append(np.ones_like(sorted_masks_3D[0]))
+
+        analyzer = innvestigate.create_analyzer("reveal.alpha_2_beta_1", model, **{"masks": sorted_masks_3D})
+
+
+        # # # Apply analyzer w.r.t. maximum activated output-neuron
+        start_time = time.time()
+        relevance = analyzer.analyze(x)
+        print("--- %s minutes ---" % ((time.time() - start_time) / 60))
+
+        masks_times_relevance = sorted_masks_3D * relevance[:, np.newaxis, np.newaxis, np.newaxis, np.newaxis]
+        exp = masks_times_relevance[:-1].sum(axis=0)
+        norm = innvestigate.faithfulnessCheck.calculate_distance.l2_normalize(exp)
+        explanations.append(norm)
+
+
+        illustrate = innvestigate.illustrate_clusters.Illustrate()
+        illustrate.mask_to_input_relevance_of_mask(relevance, sorted_masks_3D, scene_colour = copy.copy(image_rgb), detections= detections, masks = sorted_mask, image_path = image_path, label=predictions[0][0][1])
+        # illustrate.mask_to_input_relevance_of_pixels([random.randint(0, 100) for _ in range(len(masks_pixels)+2)], masks_from_heatmap3D_pixels, label = predictions[0][0][1], image_name= image_path)
     
-    sorted_mask, sorted_masks_3D = sorted_mask[:9], sorted_masks_3D[:9]
-    sorted_mask = [sorted_mask[i, ...] for i in range(9)]
-    sorted_masks_3D = [sorted_masks_3D[i, ...] for i in range(9)]
-    sorted_mask.append(np.ones_like(sorted_mask[0]))
-    sorted_masks_3D.append(np.ones_like(sorted_masks_3D[0]))
-
-    analyzer = innvestigate.create_analyzer("reveal.alpha_2_beta_1", model, **{"masks": sorted_masks_3D})
+    original_REVEAL = explanations[0] 
+    original_LRP = lrp[0] 
 
 
-    # # # Apply analyzer w.r.t. maximum activated output-neuron
-    # start_time = time.time()
-    relevance = analyzer.analyze(x)
-    # print("--- %s minutes ---" % ((time.time() - start_time) / 60))
+    Reveal_cos = []
+    Reveal_eucliden = []
 
-    illustrate = innvestigate.illustrate_clusters.Illustrate()
-    illustrate.mask_to_input_relevance_of_mask(relevance, sorted_masks_3D, scene_colour = copy.copy(image_rgb), detections= detections, masks = sorted_mask, image_path = image_path, label=predictions[0][0][1])
-    illustrate.mask_to_input_relevance_of_pixels([random.randint(0, 100) for _ in range(len(masks_pixels)+2)], masks_from_heatmap3D_pixels, label = predictions[0][0][1], image_name= image_path)
+    for e in explanations:
+        Reveal_cos.append(innvestigate.faithfulnessCheck.calculate_distance.calculate_cosine_similarity(original_REVEAL, e))
+        Reveal_eucliden.append(innvestigate.faithfulnessCheck.calculate_distance.calculate_euclidean_distance(original_REVEAL, e))
+         
+
+    LRP_cos = []
+    LRP_eucliden = []
+
+    for e in lrp:
+        LRP_cos.append(innvestigate.faithfulnessCheck.calculate_distance.calculate_cosine_similarity(original_LRP, e))
+        LRP_eucliden.append(innvestigate.faithfulnessCheck.calculate_distance.calculate_euclidean_distance(original_LRP, e))
+
+
+    results_cos = {
+    'REVEAL_cos':{
+        'REVEAL_cos_gausian_blur': Reveal_cos[1], 
+        'REVEAL_cos_gausian_noise_small': Reveal_cos[2], 
+        'REVEAL_cos_gausian_noise_big': Reveal_cos[3], 
+    },
+    'LRP_cos': {
+        'LRP_cos_gausian_blur': LRP_cos[1], 
+        'LRP_cos_gausian_noise_small': LRP_cos[2], 
+        'LRP_cos_gausian_noise_big': LRP_cos[3], 
+    },
+    }
+
+    results_euc = {
+    'REVEAL_euc':{
+        'REVEAL_euc_gausian_blur': Reveal_eucliden[1], 
+        'REVEAL_euc_gausian_noise_small': Reveal_eucliden[2], 
+        'REVEAL_euc_gausian_noise_big': Reveal_eucliden[3], 
+    },
+    'LRP_eucliden':{
+        'LRP_eucliden_gausian_blur': LRP_eucliden[1], 
+        'LRP_eucliden_gausian_noise_small': LRP_eucliden[2], 
+        'LRP_eucliden_gausian_noise_big': LRP_eucliden[3], 
+    },
+    }
+
+    # Save to CSV
+    innvestigate.faithfulnessCheck.calculate_distance.append_results('input_invaraince_comparison_cosine.csv', results_cos)
+
+    innvestigate.faithfulnessCheck.calculate_distance.append_results('input_invaraince_explanation_method_comparison_eucliden.csv', results_euc)
+         
