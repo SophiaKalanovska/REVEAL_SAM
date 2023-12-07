@@ -21,7 +21,6 @@ from segment_anything import sam_model_registry
 import cv2
 from segment_anything import SamAutomaticMaskGenerator
 import supervision as sv
-import pandas as pd
 
 
 file_dir = os.path.dirname(__file__)
@@ -71,7 +70,10 @@ if __name__ == "__main__":
         sys.exit(1)
 
     image_path = sys.argv[1]
+
+    # image_path = "ILSVRC2012_val_00000005.JPEG"
     print(image_path)
+
 
     image_size = 224
     # image_size = 299
@@ -79,8 +81,8 @@ if __name__ == "__main__":
         os.path.join(base_dir, "ILSVRC", image_path), image_size)
     image_new = image[:, :, :3]
 
-
     CHECKPOINT_PATH = "sam_vit_h_4b8939.pth"
+    # CHECKPOINT_PATH = "/root/REVEAL_SAM/sam_vit_h_4b8939.pth"
     DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     MODEL_TYPE = "vit_h"
 
@@ -116,8 +118,6 @@ if __name__ == "__main__":
 
     masks, masks_from_heatmap3D = innvestigate.masks_from_heatmap.retrieve(result, x, image_size)
 
-
-
     analyzer = innvestigate.create_analyzer("lrp.alpha_1_beta_0", model)
     pr = model.predict_on_batch(x)
     the_label_index = np.argmax(pr, axis=1)
@@ -126,8 +126,6 @@ if __name__ == "__main__":
     # # distribute the relevance to the input layer
     start_time = time.time()
     a = analyzer.analyze(x)
-
-    norm_lrp = innvestigate.faithfulnessCheck.calculate_distance.l2_normalize(a)
 
 
     masks_pixels, masks_from_heatmap3D_pixels = innvestigate.masks_from_heatmap.retrieve_pixels(a, x, image_size, image_path)
@@ -148,25 +146,6 @@ if __name__ == "__main__":
     relevance = analyzer.analyze(x)
     print("--- %s minutes ---" % ((time.time() - start_time) / 60))
 
-    masks_times_relevance = sorted_masks_3D * relevance[:, np.newaxis, np.newaxis, np.newaxis, np.newaxis]
-    exp = masks_times_relevance[:-1].sum(axis=0)
-    norm_reveal = innvestigate.faithfulnessCheck.calculate_distance.l2_normalize(exp)
-
-
-
     illustrate = innvestigate.illustrate_clusters.Illustrate()
     illustrate.mask_to_input_relevance_of_mask(relevance, sorted_masks_3D, scene_colour = copy.copy(image_rgb), detections= detections, masks = sorted_mask, image_path = image_path, label=predictions[0][0][1])
-        # illustrate.mask_to_input_relevance_of_pixels([random.randint(0, 100) for _ in range(len(masks_pixels)+2)], masks_from_heatmap3D_pixels, label = predictions[0][0][1], image_name= image_path)
-    
-    
-    name, extension = image_path.rsplit('.', 1)
-   
-    results = {
-    f"REVEAL_{name}": norm_reveal.flatten(),
-    f"LRP_{name}": norm_lrp.flatten()
-    }
-
-    innvestigate.faithfulnessCheck.calculate_distance.append_results('results.csv', results)
-
-    # innvestigate.faithfulnessCheck.calculate_distance.append_results('input_invaraince_explanation_method_comparison_eucliden.csv', results_euc)
-         
+    # illustrate.mask_to_input_relevance_of_pixels([random.randint(0, 100) for _ in range(len(masks_pixels)+2)], masks_from_heatmap3D_pixels, label = predictions[0][0][1], image_name= image_path)

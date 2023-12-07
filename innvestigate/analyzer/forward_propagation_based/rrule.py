@@ -179,6 +179,7 @@ class FlatRule(WSquareRule):
         )
 
 
+
 class AlphaBetaRule(igraph.ReverseMappingBase):
     """
     This decomposition rule handles the positive forward
@@ -262,20 +263,39 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
         if self.bias is not None:
             ratio = [ilayers.Divide_no_nan()([a, activator_relevances[-1]]) for a in activator_relevances]
             weighted_bias = [ilayers.Multiply()([self.bias, a]) for a in ratio]
+            
             # ratio = [ilayers.Absolut()([a]) for a in ratio]
 
             # rel = [ilayers.Colapse_Sum()(a) for a in activator_relevances]
             # ratio = [ilayers.Divide_no_nan()([a, rel[-1]]) for a in rel]
-            # ratio = [ilayers.Absolut()([a]) for a in ratio]
+            # ratio_mean = [ilayers.Absolut()([a]) for a in ratio]
             # mean_bias = [ilayers.Multiply()([self.bias, a]) for a in ratio]
  # ========================================================================================================
             # Stack the shuffled channels to reconstruct the tensor
-            shuffled_tensor = ilayers.ShuffledChannelsLayer()(activator_relevances[-1])    
+            # shuffled_tensor = ilayers.ShuffledChannelsLayer()(activator_relevances[-1])    
+
+            min_tensor = ilayers.Reduce_min()(activator_relevances[-1])
+
+            # min_tensor = [ilayers.Add()([a, self.bias]) for a in min_tensor]
 
   # ========================================================================================================
-            mixed_and_matched =  ilayers.Substract()([_Ys[0], shuffled_tensor])    
+            min_tensor =  ilayers.Substract()([activator_relevances[-1], min_tensor])  
+            min_tensor = ilayers.Add()([min_tensor, self.bias]) 
+            # min_tensor = [ilayers.Add()([min_tensor, a]) for a in  weighted_bias]
 
-            absolut_Ys = ilayers.Absolut()([mixed_and_matched])    
+            # absolut = [ilayers.Absolut()([a]) for a in min_tensor]    
+
+            # log_of_ten = [ilayers.Log_Of_Ten()(a) for a in absolut]
+
+            # not_equal = [ilayers.Not_Equal_Zero()(a) for a in absolut]
+
+            # log_of_ten = [ilayers.Where()([a, b, tf.constant(0.0)]) for a, b in zip(not_equal, log_of_ten)]
+
+            # # squeezed_log = [ilayers.Squeeze()(a) for a in log_of_ten]
+
+            # std_Ys =  [ilayers.Reduce_std_sparse()([a, casted_mask_the_zeros_list[-1]]) for a in log_of_ten]
+            
+            absolut_Ys = ilayers.Absolut()([min_tensor])    
 
             log_of_ten_Ys = ilayers.Log_Of_Ten()(absolut_Ys)
 
@@ -301,8 +321,6 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
             
   # ========================================================================================================
 
-
-
             mean_std_more_than_one = [ilayers.MoreThan()([a, std_Ys]) for a  in std_bias]
 
             ratio_norm = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(squeezed_log, std_bias)]
@@ -324,7 +342,7 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
 
             scaler = [ilayers.Where()([a, -b, b]) for a, b in zip(neg_bias, scaler)]
 
-            # weighted_bias = [ilayers.Multiply()([self.bias, a]) for a in scaler]
+            # scaler = [ilayers.Multiply()([self.bias, a]) for a in scaler]
 
 
             net_value = [ilayers.Add()([a, b]) for a, b in zip(activator_relevances, scaler)]
@@ -352,8 +370,7 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
 
         if scale_log == None:
             scale_log = [ilayers.Divide_no_nan()([a, _Ys[-1]]) for a in net_value]
-        return net_value, weighted_bias
-
+        return net_value, scale_log
 
 class AlphaBetaIgnoreBiasRule(AlphaBetaRule):
     """Same as AlphaBetaRule but ignores biases."""
