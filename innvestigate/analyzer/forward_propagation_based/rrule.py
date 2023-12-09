@@ -261,91 +261,103 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
         scale_log = None
 
         if self.bias is not None:
-            ratio = [ilayers.Divide_no_nan()([a, activator_relevances[-1]]) for a in activator_relevances]
-            weighted_bias = [ilayers.Multiply()([self.bias, a]) for a in ratio]
-            
-            # ratio = [ilayers.Absolut()([a]) for a in ratio]
 
-            # rel = [ilayers.Colapse_Sum()(a) for a in activator_relevances]
-            # ratio = [ilayers.Divide_no_nan()([a, rel[-1]]) for a in rel]
-            # ratio_mean = [ilayers.Absolut()([a]) for a in ratio]
-            # mean_bias = [ilayers.Multiply()([self.bias, a]) for a in ratio]
+            scaled_tensor = [ilayers.Multiply()([a, tf.constant(100.0)]) for a in activator_relevances]
+            # Round to nearest whole number
+            rounded_tensor = [tf.math.ceil(a) for a in scaled_tensor]
+            # Scale back down by 10^2
+            activator_relevances_prime = [ilayers.Divide_no_nan()([a, tf.constant(100.0)]) for a in rounded_tensor]
+        
+
+            net_plus_bias = ilayers.Add()([activator_relevances_prime[-1], self.bias])
+            net_plus_bias_mean = ilayers.Reduce_mean()(net_plus_bias)
+   
+            
+
+            ratio_net_plus_bias = ilayers.Divide_no_nan()([net_plus_bias, net_plus_bias_mean])
+            absolut_net = ilayers.Absolut()([ratio_net_plus_bias])
+
+
+
+            ratio = [ilayers.Divide_no_nan()([a, activator_relevances_prime[-1]]) for a in activator_relevances_prime]
+            absolut_bias = [ilayers.Absolut()([a]) for a in ratio]
+
+
+        
+
+# ========================================================================================================
+
+            log_of_ten_Ys = ilayers.Log_Of_Ten()(absolut_net)
+
+            not_equal_Ys = ilayers.Not_Equal_Zero()(absolut_net)        
+
+            log_of_ten_net = ilayers.Where()([not_equal_Ys, log_of_ten_Ys, tf.constant(0.0)])[0]
+
+            log_of_ten_net = ilayers.Floor()(log_of_ten_net)
+
+            # log_of_ten_net_max = ilayers.Reduce_max()(log_of_ten_net)
+
+
+            # min_abs_net = ilayers.Reduce_min()(log_of_ten_net)
+
+            std_from_the_min_value = ilayers.Reduce_std_sparse()([log_of_ten_net, casted_mask_the_zeros_list[-1]])
+
  # ========================================================================================================
-            # Stack the shuffled channels to reconstruct the tensor
-            # shuffled_tensor = ilayers.ShuffledChannelsLayer()(activator_relevances[-1])    
 
-            min_tensor = ilayers.Reduce_min()(activator_relevances[-1])
+            log_of_ten = [ilayers.Log_Of_Ten()(a) for a in absolut_bias]
 
-            # min_tensor = [ilayers.Add()([a, self.bias]) for a in min_tensor]
-
-  # ========================================================================================================
-            min_tensor =  ilayers.Substract()([activator_relevances[-1], min_tensor])  
-            min_tensor = ilayers.Add()([min_tensor, self.bias]) 
-            # min_tensor = [ilayers.Add()([min_tensor, a]) for a in  weighted_bias]
-
-            # absolut = [ilayers.Absolut()([a]) for a in min_tensor]    
-
-            # log_of_ten = [ilayers.Log_Of_Ten()(a) for a in absolut]
-
-            # not_equal = [ilayers.Not_Equal_Zero()(a) for a in absolut]
-
-            # log_of_ten = [ilayers.Where()([a, b, tf.constant(0.0)]) for a, b in zip(not_equal, log_of_ten)]
-
-            # # squeezed_log = [ilayers.Squeeze()(a) for a in log_of_ten]
-
-            # std_Ys =  [ilayers.Reduce_std_sparse()([a, casted_mask_the_zeros_list[-1]]) for a in log_of_ten]
-            
-            absolut_Ys = ilayers.Absolut()([min_tensor])    
-
-            log_of_ten_Ys = ilayers.Log_Of_Ten()(absolut_Ys)
-
-            not_equal_Ys = ilayers.Not_Equal_Zero()(absolut_Ys)            
-
-            log_of_ten_Ys = ilayers.Where()([not_equal_Ys, log_of_ten_Ys, tf.constant(0.0)])[0]
-
-            std_Ys = ilayers.Reduce_std_sparse()([log_of_ten_Ys, casted_mask_the_zeros_list[-1]])
-
-  # ========================================================================================================
-
-            absolut = [ilayers.Absolut()([a]) for a in weighted_bias]    
-
-            log_of_ten = [ilayers.Log_Of_Ten()(a) for a in absolut]
-
-            not_equal = [ilayers.Not_Equal_Zero()(a) for a in absolut]
+            not_equal = [ilayers.Not_Equal_Zero()([a]) for a in absolut_bias]
 
             log_of_ten = [ilayers.Where()([a, b, tf.constant(0.0)]) for a, b in zip(not_equal, log_of_ten)]
 
+            # min_abs_bias = [ilayers.Reduce_min()(a) for a in log_of_ten]
+
             squeezed_log = [ilayers.Squeeze()(a) for a in log_of_ten]
+
+            squeezed_log = [ilayers.Floor()(a) for a in squeezed_log]
+
+            # log_of_ten_max = [ilayers.Reduce_max()(a) for a in squeezed_log]
+# 
+
 
             std_bias =  [ilayers.Reduce_std_sparse()([a, b]) for a, b in zip(squeezed_log, casted_mask_the_zeros_list)]
             
-  # ========================================================================================================
 
-            mean_std_more_than_one = [ilayers.MoreThan()([a, std_Ys]) for a  in std_bias]
+ # ========================================================================================================
 
-            ratio_norm = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(squeezed_log, std_bias)]
+            # scaling_factor = [ilayers.Substract()([log_of_ten_net_max, a]) for a in log_of_ten_max]
 
-            ratio_norm = [ilayers.Multiply()([a, std_Ys]) for a in ratio_norm]
+            mean_std_more_than_one = [ilayers.MoreThan()([a, std_from_the_min_value]) for a  in std_bias]
+            # mean_std_more_than_one = [ilayers.MoreThan()([a, b]) for a,b   in zip(std_bias, std_Ys)]
+
+            mean_bias = [ilayers.Reduce_mean_sparse()([a, b]) for a, b in zip(squeezed_log, casted_mask_the_zeros_list)]
+            # mean_act = ilayers.Reduce_mean_sparse()([log_of_ten_net, casted_mask_the_zeros_list[-1]])
+
+            ratio_norm = [ilayers.Substract()([a, b]) for a, b in zip(squeezed_log, mean_bias)]
+
+            ratio_norm = [ilayers.Divide_no_nan()([a, b]) for a, b in zip(ratio_norm, std_bias)]
+# 
+            ratio_norm = [ilayers.Multiply()([a, std_from_the_min_value]) for a in ratio_norm]
+
+            ratio_norm = [ilayers.Add()([a, b]) for a, b in zip(ratio_norm, mean_bias)]
+
+
+            # ratio_norm = [ilayers.Multiply()([a, b]) for a, b in zip(ratio_norm, std_Ys)]
 
             new_bias = [ilayers.Where()([a, b, c]) for a, b, c in zip(mean_std_more_than_one, ratio_norm, squeezed_log)]
 
-# ========================================================================================================
+
+ # ========================================================================================================
 
 
             power = [ilayers.Power()(a) for a in new_bias]
 
             scaler = [ilayers.Where()([a, b, tf.constant(0.0)]) for a, b in zip(not_equal, power)]
 
-            scaler = [ilayers.Expand_dim()(a) for a in scaler]
 
-            neg_bias = [ilayers.LessThanZero()(a) for a in weighted_bias]
+            weighted_bias = [ilayers.Multiply()([self.bias, a]) for a in scaler]
 
-            scaler = [ilayers.Where()([a, -b, b]) for a, b in zip(neg_bias, scaler)]
-
-            # scaler = [ilayers.Multiply()([self.bias, a]) for a in scaler]
-
-
-            net_value = [ilayers.Add()([a, b]) for a, b in zip(activator_relevances, scaler)]
+            net_value = [ilayers.Add()([a, b]) for a, b in zip(activator_relevances, weighted_bias)]
 
 
             net_value = [ilayers.Concat(axis=0)(net_value)]

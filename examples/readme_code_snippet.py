@@ -66,11 +66,12 @@ if __name__ == "__main__":
 
     # List all files in the folder
     # filenames = os.listdir(folder_path)
-    if len(sys.argv) < 2:
-        print("Usage: python my_program.py <image_path>")
-        sys.exit(1)
+    # if len(sys.argv) < 2:
+    #     print("Usage: python my_program.py <image_path>")
+    #     sys.exit(1)
 
-    image_path = sys.argv[1]
+    # image_path = sys.argv[1]
+    image_path = "ILSVRC2012_val_00000021.JPEG"
     print(image_path)
 
     image_size = 224
@@ -80,7 +81,8 @@ if __name__ == "__main__":
     image_new = image[:, :, :3]
 
 
-    CHECKPOINT_PATH = "sam_vit_h_4b8939.pth"
+    CHECKPOINT_PATH = "/root/REVEAL_SAM/sam_vit_h_4b8939.pth"
+    # CHECKPOINT_PATH = "sam_vit_h_4b8939.pth"
     DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     MODEL_TYPE = "vit_h"
 
@@ -133,10 +135,11 @@ if __name__ == "__main__":
     masks_pixels, masks_from_heatmap3D_pixels = innvestigate.masks_from_heatmap.retrieve_pixels(a, x, image_size, image_path)
 
     sorted_mask, sorted_masks_3D = innvestigate.masks_from_heatmap.rank_and_sort_masks(masks, masks_from_heatmap3D, masks_from_heatmap3D_pixels)
-    
-    sorted_mask, sorted_masks_3D = sorted_mask[:9], sorted_masks_3D[:9]
-    sorted_mask = [sorted_mask[i, ...] for i in range(9)]
-    sorted_masks_3D = [sorted_masks_3D[i, ...] for i in range(9)]
+
+    if len(sorted_mask)> 9:
+        sorted_mask, sorted_masks_3D = sorted_mask[:9], sorted_masks_3D[:9]
+    sorted_mask = [sorted_mask[i, ...] for i in range(len(sorted_mask))]
+    sorted_masks_3D = [sorted_masks_3D[i, ...] for i in range(len(sorted_mask))]
     sorted_mask.append(np.ones_like(sorted_mask[0]))
     sorted_masks_3D.append(np.ones_like(sorted_masks_3D[0]))
 

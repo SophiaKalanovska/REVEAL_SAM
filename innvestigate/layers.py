@@ -459,6 +459,10 @@ class Squeeze(klayers.Layer):
     def call(self, X: Tensor, *_args, **_kwargs) -> Tensor:
         return tf.squeeze(X)
     
+class Floor(klayers.Layer):
+    def call(self, X: Tensor, *_args, **_kwargs) -> Tensor:
+        return tf.floor(X)
+    
 class Reduce_Sum(klayers.Layer):
     def call(self, X: Tensor, *_args, **_kwargs) -> Tensor:
         return tf.math.reduce_sum(X, 0)
@@ -497,7 +501,10 @@ class Reduce_mean(klayers.Layer):
         shape = inputs.shape
         if len(shape) != 1:
             inputs = tf.reshape(inputs[0], [-1, inputs[0].shape[-1]])
-        return tf.math.reduce_mean(inputs, 0)
+        if (inputs.shape[0] == 1):
+            return tf.math.reduce_mean(inputs, -1)
+        else:
+            return tf.math.reduce_mean(inputs, 0)
         # return tfp.stats.percentile(flatten_a, 50.0, interpolation='midpoint')
     
 class Reduce_min(klayers.Layer):
@@ -507,8 +514,9 @@ class Reduce_min(klayers.Layer):
 
 class Reduce_max(klayers.Layer):
     def call(self, inputs: Tensor, *_args, **_kwargs) -> Tensor:
-        flatten_a = tf.reshape(inputs[0], [-1, inputs[0].shape[-1]])
-        return tf.reduce_max(flatten_a, axis=0)
+        if len(inputs.shape) != 1:
+            inputs = tf.reshape(inputs[0], [-1, inputs[0].shape[-1]])
+        return tf.reduce_max(inputs, axis=0)
 
 class tensor_transformation(klayers.Layer):
     def call(self, scaled_value: Tensor, value: Tensor, ratio: Tensor, *_args, **_kwargs) -> Tensor:
@@ -542,11 +550,14 @@ class Reduce_mean_sparse(klayers.Layer):
             b = tf.reshape(b, [-1, b.shape[-1]])
 
 
-        sum = tf.math.reduce_sum(a, 0)
-        n = tf.math.reduce_sum(b, 0)
-
+        if (a.shape[0] == 1):
+            sum = tf.math.reduce_sum(a, -1)
+            n = tf.math.reduce_sum(b, -1)
+        else:
+            sum = tf.math.reduce_sum(a, 0)
+            n = tf.math.reduce_sum(b, 0)
+        
         mean = tf.math.divide_no_nan(sum, n)
-
         return mean
 class Average(klayers.Layer):
     def call(self, inputs: Tensor, *_args, **_kwargs) -> Tensor:

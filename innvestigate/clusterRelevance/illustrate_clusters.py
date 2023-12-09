@@ -65,16 +65,15 @@ class Illustrate:
                     # 73: np.array([randrange(255),randrange(255),randrange(255)]),
 
                     3: np.array([255, 0, 0]), # red 
-                    5: np.array([253, 44, 129]), # light red
-                    #  7: np.array([255, 102, 102]), # light red
+                    5: np.array([253, 44, 129]), # pink
                     11: np.array([251, 118, 11]),# orange
-                    13: np.array([251, 205, 11]),# light orange
-                    17: np.array([255, 255, 0]),# yellow
-                    19: np.array([0,204,0]), # green
-                    23: np.array([51, 255, 153]), # blueish green
+                    13: np.array([255, 255, 0]),# yellow
+                    17: np.array([50,204,0]), # light green
+                    19: np.array([0,160,52]), # green
+                    23: np.array([137,207,240]), # blueish green
                     29: np.array([0, 128, 255]), # light blue
                     31: np.array([0, 0, 204]),  # blue
-                    37: np.array([0, 0, 153]), # dark blue
+                    37: np.array([0, 0, 102]), # dark blue
                     41: np.array([51, 0, 102]), # purple
                     
                     
@@ -184,7 +183,7 @@ class Illustrate:
         l = ax.legend(custom_lines, relevances_sorted, title="Relevance of label \n " + label + "\n out of " + r"$\bf{" "%.3f" % full_relevance + "}$" "\n",
             loc='center left', bbox_to_anchor=(0.3, 0.5), fancybox=True, shadow=True, fontsize=11,
             title_fontsize=11, alignment="center")
-        plt.savefig("/Users/sophia/Documents/REVEAL_SAM/vgg16_v3/" + image_path + ".png")
+        plt.savefig("vgg16_v3/" + image_path + ".png")
         plt.setp(l.get_title(), multialignment='center')
         # plt.show()
 
@@ -251,7 +250,7 @@ class Illustrate:
 
         # plt.setp(l.get_title(), multialignment='center')
         plt.imshow(data_3d)
-        plt.savefig("/Users/sophia/Documents/REVEAL_SAM/vgg16_v3/" + image_name + "_heatmap.png")
+        plt.savefig("vgg16_v3/" + image_name + "_heatmap.png")
         # plt.show()
         plt.clf()
 
