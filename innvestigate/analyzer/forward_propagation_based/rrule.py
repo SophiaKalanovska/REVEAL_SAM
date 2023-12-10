@@ -276,11 +276,22 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
 
             ratio_net_plus_bias = ilayers.Divide_no_nan()([net_plus_bias, net_plus_bias_mean])
             absolut_net = ilayers.Absolut()([ratio_net_plus_bias])
+            scaled_tensor = ilayers.Multiply()([absolut_net, tf.constant(100.0)]) 
+            # Round to nearest whole number
+            rounded_tensor = tf.math.ceil(scaled_tensor) 
+            # Scale back down by 10^2
+            absolut_net = ilayers.Divide_no_nan()([rounded_tensor, tf.constant(100.0)]) 
 
 
 
             ratio = [ilayers.Divide_no_nan()([a, activator_relevances_prime[-1]]) for a in activator_relevances_prime]
             absolut_bias = [ilayers.Absolut()([a]) for a in ratio]
+
+            scaled_tensor = [ilayers.Multiply()([a, tf.constant(100.0)]) for a in absolut_bias]
+            # Round to nearest whole number
+            rounded_tensor = [tf.math.ceil(a) for a in scaled_tensor]
+            # Scale back down by 10^2
+            absolut_bias = [ilayers.Divide_no_nan()([a, tf.constant(100.0)]) for a in rounded_tensor]
 
 
         
@@ -293,7 +304,7 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
 
             log_of_ten_net = ilayers.Where()([not_equal_Ys, log_of_ten_Ys, tf.constant(0.0)])[0]
 
-            log_of_ten_net = ilayers.Floor()(log_of_ten_net)
+            # log_of_ten_net = ilayers.Floor()(log_of_ten_net)
 
             # log_of_ten_net_max = ilayers.Reduce_max()(log_of_ten_net)
 
@@ -314,7 +325,7 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
 
             squeezed_log = [ilayers.Squeeze()(a) for a in log_of_ten]
 
-            squeezed_log = [ilayers.Floor()(a) for a in squeezed_log]
+            # squeezed_log = [ilayers.Floor()(a) for a in squeezed_log]
 
             # log_of_ten_max = [ilayers.Reduce_max()(a) for a in squeezed_log]
 # 

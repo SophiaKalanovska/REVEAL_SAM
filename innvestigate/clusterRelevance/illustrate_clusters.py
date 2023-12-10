@@ -68,7 +68,7 @@ class Illustrate:
                     5: np.array([253, 44, 129]), # pink
                     11: np.array([251, 118, 11]),# orange
                     13: np.array([255, 255, 0]),# yellow
-                    17: np.array([50,204,0]), # light green
+                    17: np.array([90,204,0]), # light green
                     19: np.array([0,160,52]), # green
                     23: np.array([137,207,240]), # blueish green
                     29: np.array([0, 128, 255]), # light blue
