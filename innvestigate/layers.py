@@ -462,6 +462,10 @@ class Squeeze(klayers.Layer):
 class Floor(klayers.Layer):
     def call(self, X: Tensor, *_args, **_kwargs) -> Tensor:
         return tf.floor(X)
+
+class Ceil(klayers.Layer):
+    def call(self, X: Tensor, *_args, **_kwargs) -> Tensor:
+        return tf.math.ceil(X)
     
 class Reduce_Sum(klayers.Layer):
     def call(self, X: Tensor, *_args, **_kwargs) -> Tensor:

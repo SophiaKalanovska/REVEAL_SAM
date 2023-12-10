@@ -62,38 +62,38 @@ utils = SourceFileLoader("utils", os.path.join(base_dir, "utils.py")).load_modul
 if __name__ == "__main__":
     tf.compat.v1.disable_eager_execution()
 
-    # if len(sys.argv) < 2:
-    #     print("Usage: python my_program.py <image_path>")
-    #     sys.exit(1)
+    if len(sys.argv) < 2:
+        print("Usage: python my_program.py <image_path>")
+        sys.exit(1)
 
-    # image_path = sys.argv[1]
-    image_path = "ILSVRC2012_val_00000016.JPEG"
+    image_path = sys.argv[1]
+    # image_path = "ILSVRC2012_val_00000001.JPEG"
     
-    image_size = 224
-    # image_size = 299
-    image = utils.load_image(
-        os.path.join(base_dir, "ILSVRC", image_path), image_size)
-    image_new = image[:, :, :3]
+    # image_size = 224
+    # # image_size = 299
+    # image = utils.load_image(
+    #     os.path.join(base_dir, "ILSVRC", image_path), image_size)
+    # image_new = image[:, :, :3]
+
+
+    image_new = cv2.imread("/root/REVEAL_SAM/examples/ILSVRC/" +image_path)
 
     name, extension = os.path.splitext(image_path)
 
-    path = base_dir + "/ILSVRC/" + name
 
-
-    
     image_blur =innvestigate.faithfulnessCheck.noise_and_blur.gaussian_blur(image_new)
     image_blur = image_blur.astype(np.uint8)
     image_blur = Image.fromarray(image_blur)
-    image_blur.save(path + "_blur" + extension)
+    image_blur.save("/root/REVEAL_SAM/examples/ILSVRC_blur/" + name + "_blur" + extension)
 
 
 
-    image_gausian_small = innvestigate.faithfulnessCheck.noise_and_blur.add_gaussian_noise(image_new, 0.1)
+    image_gausian_small = innvestigate.faithfulnessCheck.noise_and_blur.add_gaussian_noise(image_new, 0.05)
     image_gausian_small = image_gausian_small.astype(np.uint8)
     image_gausian_small = Image.fromarray(image_gausian_small)
-    image_gausian_small.save(path + "_gausian_small" + extension)
+    image_gausian_small.save("/root/REVEAL_SAM/examples/ILSVRC_small/" + name + "_gausian_small" + extension)
 
-    image_gausian_big = innvestigate.faithfulnessCheck.noise_and_blur.add_gaussian_noise(image_new, 1.5)
+    image_gausian_big = innvestigate.faithfulnessCheck.noise_and_blur.add_gaussian_noise(image_new, 80.0)
     image_gausian_big = image_gausian_big.astype(np.uint8)
     image_gausian_big = Image.fromarray(image_gausian_big)
-    image_gausian_big.save(path + "_gausian_big" + extension)
+    image_gausian_big.save("/root/REVEAL_SAM/examples/ILSVRC_big/" + name + "_gausian_big" + extension)

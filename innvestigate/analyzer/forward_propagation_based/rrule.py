@@ -262,11 +262,11 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
 
         if self.bias is not None:
 
-            scaled_tensor = [ilayers.Multiply()([a, tf.constant(100.0)]) for a in activator_relevances]
+            scaled_tensor = [ilayers.Multiply()([a, tf.constant(10.0)]) for a in activator_relevances]
             # Round to nearest whole number
-            rounded_tensor = [tf.math.ceil(a) for a in scaled_tensor]
+            rounded_tensor = [ilayers.Ceil()(a) for a in scaled_tensor]
             # Scale back down by 10^2
-            activator_relevances_prime = [ilayers.Divide_no_nan()([a, tf.constant(100.0)]) for a in rounded_tensor]
+            activator_relevances_prime = [ilayers.Divide_no_nan()([a, tf.constant(10.0)]) for a in rounded_tensor]
         
 
             net_plus_bias = ilayers.Add()([activator_relevances_prime[-1], self.bias])
@@ -276,22 +276,28 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
 
             ratio_net_plus_bias = ilayers.Divide_no_nan()([net_plus_bias, net_plus_bias_mean])
             absolut_net = ilayers.Absolut()([ratio_net_plus_bias])
-            scaled_tensor = ilayers.Multiply()([absolut_net, tf.constant(100.0)]) 
+            scaled_tensor = ilayers.Multiply()([absolut_net, tf.constant(1000.0)]) 
             # Round to nearest whole number
-            rounded_tensor = tf.math.ceil(scaled_tensor) 
+            rounded_tensor = ilayers.Ceil()(scaled_tensor) 
+            absolut_net =  ilayers.Divide_no_nan()([rounded_tensor, tf.constant(1000.0)])
             # Scale back down by 10^2
-            absolut_net = ilayers.Divide_no_nan()([rounded_tensor, tf.constant(100.0)]) 
+            # net_plus_bias = ilayers.Add()([activator_relevances_prime[-1], self.bias])
+
+            # absolut_net = ilayers.Absolut()([net_plus_bias])
+
 
 
 
             ratio = [ilayers.Divide_no_nan()([a, activator_relevances_prime[-1]]) for a in activator_relevances_prime]
             absolut_bias = [ilayers.Absolut()([a]) for a in ratio]
 
-            scaled_tensor = [ilayers.Multiply()([a, tf.constant(100.0)]) for a in absolut_bias]
+            scaled_tensor = [ilayers.Multiply()([a, tf.constant(1000.0)]) for a in absolut_bias]
             # Round to nearest whole number
-            rounded_tensor = [tf.math.ceil(a) for a in scaled_tensor]
+            rounded_tensor = [ilayers.Ceil()(a) for a in scaled_tensor]
             # Scale back down by 10^2
-            absolut_bias = [ilayers.Divide_no_nan()([a, tf.constant(100.0)]) for a in rounded_tensor]
+            absolut_bias = [ilayers.Divide_no_nan()([a, tf.constant(1000.0)]) for a in rounded_tensor]
+
+            # weighted_bias = [ilayers.Multiply()([self.bias, a]) for a in absolut_bias]
 
 
         
@@ -365,10 +371,17 @@ class AlphaBetaRule(igraph.ReverseMappingBase):
 
             scaler = [ilayers.Where()([a, b, tf.constant(0.0)]) for a, b in zip(not_equal, power)]
 
+            # scaler = [ilayers.Expand_dim()(a) for a in scaler]
 
-            weighted_bias = [ilayers.Multiply()([self.bias, a]) for a in scaler]
+            # neg_bias = [ilayers.LessThanZero()(a) for a in weighted_bias]
 
-            net_value = [ilayers.Add()([a, b]) for a, b in zip(activator_relevances, weighted_bias)]
+            # scaler = [ilayers.Where()([a, -b, b]) for a, b in zip(neg_bias, scaler)]
+
+            scaler = [ilayers.Multiply()([self.bias, a]) for a in scaler]
+
+            
+
+            net_value = [ilayers.Add()([a, b]) for a, b in zip(activator_relevances, scaler)]
 
 
             net_value = [ilayers.Concat(axis=0)(net_value)]

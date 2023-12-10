@@ -11,6 +11,6 @@ for image_file in $IMAGE_DIR/*; do
         novel_part=${image_file#$IMAGE_DIR/}
         
         echo "Processing $novel_part"
-        poetry run python3 examples/generate_blurs_noise.py "$novel_part"
+        poetry run python3 examples/generte_blurs_noise.py "$novel_part"
     fi
 done
