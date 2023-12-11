@@ -45,6 +45,7 @@ import tensorflow as tf
 import time
 # import argparse
 # import pickle
+import json
 
 
 ###############################################################################
@@ -66,18 +67,47 @@ if __name__ == "__main__":
 
     # List all files in the folder
     # filenames = os.listdir(folder_path)
-    if len(sys.argv) < 6:
-        print("Usage: python my_program.py <image_path>")
-        sys.exit(1)
-
+    # if len(sys.argv) < 2:
+    #     print("Usage: python my_program.py <image_path>")
+    #     sys.exit(1)
+    print("I am in this file")
     image_path = sys.argv[1]
-    sorted_mask = sys.argv[2]
-    sorted_masks_3D = sys.argv[3]
-    norm_lrp= sys.argv[4]
-    norm_reveal = sys.argv[5]
-    the_label_index = sys.argv[6]
-    image_folder = sys.argv[7]
-    noise_type = sys.argv[8]
+    print(image_path)
+    
+    
+    image_folder = sys.argv[2]
+    noise_type = sys.argv[3]
+
+
+    with open("/root/REVEAL_SAM/examples/temp_results.json", 'r') as temp_file:
+        list_of_returns = json.load(temp_file)
+        
+
+    # print(list_of_returns)
+    # list_of_returns = json.loads(list_of_returns)
+    # print(list_of_returns)
+
+
+
+    sorted_mask = json.loads(list_of_returns[0])
+    sorted_mask = np.array(sorted_mask)
+
+    sorted_masks_3D = json.loads(list_of_returns[1])
+    sorted_masks_3D = np.array(sorted_masks_3D)
+
+    norm_lrp = json.loads(list_of_returns[2])
+    norm_lrp = np.array(norm_lrp)
+
+    norm_reveal = json.loads(list_of_returns[3])
+    norm_reveal = np.array(norm_reveal)
+
+    the_label_index = json.loads(list_of_returns[4])
+    the_label_index = np.array(the_label_index)
+
+    predictions = list_of_returns[5]
+    print(the_label_index)
+
+    
 
     # image_path = "ILSVRC2012_val_00000001_gausian_big.JPEG"
     print(image_path)
@@ -87,6 +117,9 @@ if __name__ == "__main__":
     image = utils.load_image(
         os.path.join(base_dir, image_folder, image_path), image_size)
     image_new = image[:, :, :3]
+
+    image_bgr = np.asarray(image_new, dtype=np.uint8)
+    image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
 
 
     model_call = vgg16
@@ -106,8 +139,8 @@ if __name__ == "__main__":
 
     analyzer = innvestigate.create_analyzer("lrp.alpha_1_beta_0", model)
     pr_2 = model.predict_on_batch(x)
-    the_label_index_2 = np.argmax(pr, axis=1)
-    predictions_2 = model_call.decode_predictions(pr)
+    the_label_index_2 = np.argmax(pr_2, axis=1)
+
     print(the_label_index_2)
 
     # # distribute the relevance to the input layer
@@ -118,11 +151,12 @@ if __name__ == "__main__":
 
 
 
-    analyzer = innvestigate.create_analyzer("reveal.alpha_2_beta_1", model, **{"masks": sorted_masks_3D})
+    analyzer = innvestigate.create_analyzer("reveal.alpha_2_beta_1", model, **{"masks": sorted_masks_3D, "index": the_label_index})
+
 
     # # # Apply analyzer w.r.t. maximum activated output-neuron
     start_time = time.time()
-    relevance = analyzer.analyze(x)
+    relevance = analyzer.analyze(x, label=the_label_index)
     print("--- %s minutes ---" % ((time.time() - start_time) / 60))
 
     masks_times_relevance = sorted_masks_3D * relevance[:, np.newaxis, np.newaxis, np.newaxis, np.newaxis]
@@ -132,7 +166,7 @@ if __name__ == "__main__":
 
 
     illustrate = innvestigate.illustrate_clusters.Illustrate()
-    illustrate.mask_to_input_relevance_of_mask(relevance, sorted_masks_3D, scene_colour = copy.copy(image_rgb), detections= detections, masks = sorted_mask, image_path = image_path, label=predictions[0][0][1])
+    illustrate.mask_to_input_relevance_of_mask(relevance, sorted_masks_3D, scene_colour = copy.copy(image_rgb), masks = sorted_mask, image_path = image_path, label=predictions)
         # illustrate.mask_to_input_relevance_of_pixels([random.randint(0, 100) for _ in range(len(masks_pixels)+2)], masks_from_heatmap3D_pixels, label = predictions[0][0][1], image_name= image_path)
     
     

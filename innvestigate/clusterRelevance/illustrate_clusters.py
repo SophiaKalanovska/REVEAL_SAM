@@ -86,7 +86,7 @@ class Illustrate:
         grey = np.dot(rgb[...,:3], [0.2989, 0.5870, 0.1140])
         return skc.gray2rgb(grey)
     
-    def mask_to_input_relevance_of_mask(self, relevance, masks_from_heatmap3D, scene_colour, detections, masks, image_path, label = None):
+    def mask_to_input_relevance_of_mask(self, relevance, masks_from_heatmap3D, scene_colour, masks, image_path, label = None):
         opacity = 0.6
         print(relevance)
         full_relevance = relevance[-1]
@@ -112,7 +112,6 @@ class Illustrate:
         #     result.append(sum/n)
 
         # relevances_clusters = result 
-        detections = detections[:9]
         image = copy.copy(scene_colour)
         scene = self.rgb2gray(copy.copy(scene_colour))
         
@@ -124,7 +123,7 @@ class Illustrate:
 
         custom_lines = []
 
-        for i in np.flip(np.argsort(detections.area)):
+        for i in range(len(masks_with_ones_sorted)):
                 if i >= 10:
                     relevance = np.array([randrange(255),randrange(255),randrange(255)])
                     color = Color(relevance[0], relevance[1], relevance[2])
