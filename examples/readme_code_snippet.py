@@ -153,7 +153,7 @@ if __name__ == "__main__":
     start_time = time.time()
     a = analyzer.analyze(x, the_label_index)
 
-    norm_lrp = innvestigate.faithfulnessCheck.calculate_distance.l2_normalize(a)
+    # norm_lrp = innvestigate.faithfulnessCheck.calculate_distance.l2_normalize(a)
 
 
     masks_pixels, masks_from_heatmap3D_pixels = innvestigate.masks_from_heatmap.retrieve_pixels(a, x, image_size, image_path)
@@ -177,7 +177,7 @@ if __name__ == "__main__":
 
     masks_times_relevance = sorted_masks_3D * relevance[:, np.newaxis, np.newaxis, np.newaxis, np.newaxis]
     exp = masks_times_relevance[:-1].sum(axis=0)
-    norm_reveal = innvestigate.faithfulnessCheck.calculate_distance.l2_normalize(exp)
+    # norm_reveal = innvestigate.faithfulnessCheck.calculate_distance.l2_normalize(exp)
 
 
 
@@ -187,8 +187,8 @@ if __name__ == "__main__":
 
     sorted_mask = to_json_from_list(sorted_mask)
     sorted_masks_3D = to_json_from_list(sorted_masks_3D)
-    norm_lrp = to_json_from_list(norm_lrp)
-    norm_reveal = to_json_from_list(norm_reveal)
+    norm_lrp = to_json_from_list(a)
+    norm_reveal = to_json_from_list(exp)
     the_label_index = to_json_from_list(the_label_index)
 
     with open("/root/REVEAL_SAM/examples/temp_results.json", 'w') as temp_file:

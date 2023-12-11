@@ -81,19 +81,19 @@ if __name__ == "__main__":
     name, extension = os.path.splitext(image_path)
 
 
-    image_blur =innvestigate.faithfulnessCheck.noise_and_blur.gaussian_blur(image_new)
-    image_blur = image_blur.astype(np.uint8)
-    image_blur = Image.fromarray(image_blur)
-    image_blur.save("/root/REVEAL_SAM/examples/ILSVRC_blur/" + name + "_blur" + extension)
+    # image_blur =innvestigate.faithfulnessCheck.noise_and_blur.gaussian_blur(image_new)
+    # image_blur = image_blur.astype(np.uint8)
+    # image_blur = Image.fromarray(image_blur)
+    # image_blur.save("/root/REVEAL_SAM/examples/ILSVRC_blur/" + name + "_blur" + extension)
 
 
 
-    image_gausian_small = innvestigate.faithfulnessCheck.noise_and_blur.add_gaussian_noise(image_new, 0.05)
-    image_gausian_small = image_gausian_small.astype(np.uint8)
-    image_gausian_small = Image.fromarray(image_gausian_small)
-    image_gausian_small.save("/root/REVEAL_SAM/examples/ILSVRC_small/" + name + "_gausian_small" + extension)
+    # image_gausian_small = innvestigate.faithfulnessCheck.noise_and_blur.add_gaussian_noise(image_new, 0.05)
+    # image_gausian_small = image_gausian_small.astype(np.uint8)
+    # image_gausian_small = Image.fromarray(image_gausian_small)
+    # image_gausian_small.save("/root/REVEAL_SAM/examples/ILSVRC_small/" + name + "_gausian_small" + extension)
 
-    image_gausian_big = innvestigate.faithfulnessCheck.noise_and_blur.add_gaussian_noise(image_new, 80.0)
+    image_gausian_big = innvestigate.faithfulnessCheck.noise_and_blur.add_uniform_noise(image_new)
     image_gausian_big = image_gausian_big.astype(np.uint8)
     image_gausian_big = Image.fromarray(image_gausian_big)
     image_gausian_big.save("/root/REVEAL_SAM/examples/ILSVRC_big/" + name + "_gausian_big" + extension)

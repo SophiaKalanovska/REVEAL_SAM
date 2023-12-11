@@ -91,9 +91,11 @@ if __name__ == "__main__":
 
     sorted_mask = json.loads(list_of_returns[0])
     sorted_mask = np.array(sorted_mask)
+    sorted_mask = [np.array(element) for element in sorted_mask]
 
     sorted_masks_3D = json.loads(list_of_returns[1])
     sorted_masks_3D = np.array(sorted_masks_3D)
+    sorted_masks_3D = [np.array(element) for element in sorted_masks_3D]
 
     norm_lrp = json.loads(list_of_returns[2])
     norm_lrp = np.array(norm_lrp)
@@ -122,6 +124,28 @@ if __name__ == "__main__":
     image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
 
 
+
+    CHECKPOINT_PATH = "/root/REVEAL_SAM/sam_vit_h_4b8939.pth"
+    # CHECKPOINT_PATH = "sam_vit_h_4b8939.pth"
+    DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    MODEL_TYPE = "vit_h"
+
+    sam = sam_model_registry[MODEL_TYPE](checkpoint=CHECKPOINT_PATH)
+    sam.to(device=DEVICE)
+
+    mask_generator = SamAutomaticMaskGenerator(sam)
+    IMAGE_PATH = base_dir + "/images/"+ image_path
+
+    image_bgr = np.asarray(image_new, dtype=np.uint8)
+    image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+    result = mask_generator.generate(image_rgb)
+
+
+
+    mask_annotator = sv.MaskAnnotator()
+    detections = sv.Detections.from_sam(result)
+
+
     model_call = vgg16
     # model_call = vgg19
     # model_call = inception
@@ -137,6 +161,8 @@ if __name__ == "__main__":
     model = innvestigate.model_wo_softmax(model)
     x = preprocess(image[None])
 
+    masks, masks_from_heatmap3D = innvestigate.masks_from_heatmap.retrieve(result, x, image_size)
+
     analyzer = innvestigate.create_analyzer("lrp.alpha_1_beta_0", model)
     pr_2 = model.predict_on_batch(x)
     the_label_index_2 = np.argmax(pr_2, axis=1)
@@ -147,9 +173,19 @@ if __name__ == "__main__":
     start_time = time.time()
     a = analyzer.analyze(x, the_label_index)
 
-    norm_lrp_2 = innvestigate.faithfulnessCheck.calculate_distance.l2_normalize(a)
+    # norm_lrp_2 = innvestigate.faithfulnessCheck.calculate_distance.l2_normalize(a)
 
 
+    masks_pixels, masks_from_heatmap3D_pixels = innvestigate.masks_from_heatmap.retrieve_pixels(a, x, image_size, image_path)
+
+    sorted_mask, sorted_masks_3D = innvestigate.masks_from_heatmap.rank_and_sort_masks(masks, masks_from_heatmap3D, masks_from_heatmap3D_pixels)
+
+    if len(sorted_mask)> 9:
+        sorted_mask, sorted_masks_3D = sorted_mask[:9], sorted_masks_3D[:9]
+    sorted_mask = [sorted_mask[i, ...] for i in range(len(sorted_mask))]
+    sorted_masks_3D = [sorted_masks_3D[i, ...] for i in range(len(sorted_mask))]
+    sorted_mask.append(np.ones_like(sorted_mask[0]))
+    sorted_masks_3D.append(np.ones_like(sorted_masks_3D[0]))
 
     analyzer = innvestigate.create_analyzer("reveal.alpha_2_beta_1", model, **{"masks": sorted_masks_3D, "index": the_label_index})
 
@@ -161,7 +197,7 @@ if __name__ == "__main__":
 
     masks_times_relevance = sorted_masks_3D * relevance[:, np.newaxis, np.newaxis, np.newaxis, np.newaxis]
     exp = masks_times_relevance[:-1].sum(axis=0)
-    norm_reveal_2 = innvestigate.faithfulnessCheck.calculate_distance.l2_normalize(exp)
+    # norm_reveal_2 = innvestigate.faithfulnessCheck.calculate_distance.l2_normalize(exp)
 
 
 
@@ -171,11 +207,16 @@ if __name__ == "__main__":
     
     
     
-    Reveal_cosine = innvestigate.faithfulnessCheck.calculate_distance.calculate_cosine_similarity(norm_reveal.flatten(), norm_reveal_2.flatten())
-    Reveal_euclidean = innvestigate.faithfulnessCheck.calculate_distance.calculate_euclidean_distance(norm_reveal.flatten(), norm_reveal_2.flatten())
+    norm_reveal, norm_reveal_2 = innvestigate.faithfulnessCheck.calculate_distance.l2_normalize_both(norm_reveal.flatten(), exp.flatten())
 
-    LRP_cosine = innvestigate.faithfulnessCheck.calculate_distance.calculate_cosine_similarity(norm_lrp.flatten(), norm_lrp_2.flatten())
-    LRP_euclidean = innvestigate.faithfulnessCheck.calculate_distance.calculate_euclidean_distance(norm_lrp.flatten(), norm_lrp.flatten())
+    # Reveal_cosine = innvestigate.faithfulnessCheck.calculate_distance.calculate_cosine_similarity(norm_reveal, norm_reveal_2)
+    Reveal_euclidean = innvestigate.faithfulnessCheck.calculate_distance.calculate_euclidean_distance(norm_reveal, norm_reveal_2)
+    # Reveal_euclidean = innvestigate.faithfulnessCheck.calculate_distance.compare_ssim()
+
+    norm_lrp, norm_lrp_2 = innvestigate.faithfulnessCheck.calculate_distance.l2_normalize_both(norm_lrp.flatten(), a.flatten())   
+    # LRP_cosine = innvestigate.faithfulnessCheck.calculate_distance.calculate_cosine_similarity(norm_lrp, norm_lrp_2)
+    LRP_euclidean = innvestigate.faithfulnessCheck.calculate_distance.calculate_euclidean_distance(norm_lrp, norm_lrp_2)
+    # LRP_euclidean = innvestigate.faithfulnessCheck.calculate_distance.compare_ssim(norm_lrp.flatten(), a.flatten())
 
     change = the_label_index_2 == the_label_index
     print(change)
@@ -184,11 +225,11 @@ if __name__ == "__main__":
     name, extension = image_path.rsplit('.', 1)
    
     results = {
-     f"REVEAL_{noise_type}_cosine": Reveal_cosine,
+    #  f"REVEAL_{noise_type}_cosine": Reveal_cosine,
      f"REVEAL_{noise_type}_euclidean": Reveal_euclidean,
-     f"LRP_{noise_type}_cosine": LRP_cosine,
+    #  f"LRP_{noise_type}_cosine": LRP_cosine,
      f"LRP_{noise_type}_euclidean": LRP_euclidean,
-     f"Classification_change": change,
+     f"Same_Classification_{noise_type}": change,
     }
 
     innvestigate.faithfulnessCheck.calculate_distance.append_results('results.csv', results)
