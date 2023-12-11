@@ -53,12 +53,14 @@ class AnalyzerBase(metaclass=ABCMeta):
         model: Model,
         neuron_selection_mode: str = "index",
         masks: list = None,
+        index= None, 
         disable_model_checks: bool = False,
         _model_check_done: bool = False,
         _model_checks: list[ModelCheckDict] = None,
     ) -> None:
         self._model = model
         self.masks = masks
+        self.index = index
         self._disable_model_checks = disable_model_checks
         self._model_check_done = _model_check_done
 

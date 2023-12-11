@@ -460,7 +460,7 @@ class REVEAL(ReverseAnalyzerBase):
         )
 
         # FINALIZED constructor.
-        return super()._create_analysis(*args, **dict(**kwargs, forward_contibution=True, random_masks=self.masks))
+        return super()._create_analysis(*args, **dict(**kwargs, forward_contibution=True, random_masks=self.masks, index = self.index))
 
     def _default_reverse_mapping(
         self,

@@ -121,9 +121,10 @@ class ReverseAnalyzerBase(AnalyzerNetworkBase):
         """Returns masked gradient."""
         if self.masks is not None:
             # grad = ilayers.Gradient()([Ys, Xs])
-            new_tensor = tf.zeros_like(Ys)
-            updates = [1]
-            grad = tf.tensor_scatter_nd_update(new_tensor, reverse_state["index"], updates)
+            new_tensor = tf.zeros_like(reversed_Ys[0])
+            indices = [[i, reverse_state["index"][0]] for i in range(reversed_Ys[0].shape[0])]
+            updates = [1]* reversed_Ys[0].shape[0]
+            grad = [tf.tensor_scatter_nd_update(new_tensor, indices, updates)]
 
 
             max_activ = [ilayers.Multiply()([a, b]) for a,b in zip(grad, reversed_Ys)]
