@@ -160,16 +160,9 @@ if __name__ == "__main__":
     illustrate = innvestigate.illustrate_clusters.Illustrate()
     illustrate.mask_to_input_relevance_of_mask(relevance, sorted_masks_3D, scene_colour = copy.copy(image_rgb), detections= detections, masks = sorted_mask, image_path = image_path, label=predictions[0][0][1])
         # illustrate.mask_to_input_relevance_of_pixels([random.randint(0, 100) for _ in range(len(masks_pixels)+2)], masks_from_heatmap3D_pixels, label = predictions[0][0][1], image_name= image_path)
-    
-    
-    name, extension = image_path.rsplit('.', 1)
-   
-    results = {
-    f"REVEAL_{name}": norm_reveal.flatten(),
-    f"LRP_{name}": norm_lrp.flatten()
-    }
 
-    innvestigate.faithfulnessCheck.calculate_distance.append_results('results.csv', results)
+
+    return [sorted_mask, sorted_masks_3D, norm_lrp, norm_reveal, the_label_index]
 
     # innvestigate.faithfulnessCheck.calculate_distance.append_results('input_invaraince_explanation_method_comparison_eucliden.csv', results_euc)
          
