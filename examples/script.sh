@@ -21,14 +21,14 @@ for image_file in $IMAGE_DIR/*; do
         blur="${name_before_dot}_blur.${name_after_dot}"
         echo "Processing $blur"
 
-        poetry run python3 examples/noise_execute_method.py "$blur" returns[0] returns[1] returns[2] returns[3] returns[4] "ILSVRC_blur"
+        poetry run python3 examples/noise_execute_method.py "$blur" $returns[0] $returns[1] $returns[2] $returns[3] $returns[4] "ILSVRC_blur" "_blur"
 
         big="${name_before_dot}_gaussian_big.${name_after_dot}"
         echo "Processing $big"
-        poetry run python3 examples/noise_execute_method.py "$big" returns[0] returns[1] returns[2] returns[3] returns[4] "ILSVRC_big"
+        poetry run python3 examples/noise_execute_method.py "$big" $returns[0] $returns[1] $returns[2] $returns[3] $returns[4] "ILSVRC_big" "_big"
 
         small="${name_before_dot}_gaussian_small.${name_after_dot}"
         echo "Processing $small"
-        poetry run python3 examples/noise_execute_method.py "$small" returns[0] returns[1] returns[2] returns[3] returns[4] "ILSVRC_small"
+        poetry run python3 examples/noise_execute_method.py "$small" $returns[0] $returns[1] $returns[2] $returns[3] $returns[4] "ILSVRC_small" "_small"
     fi
 done

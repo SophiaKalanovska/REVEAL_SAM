@@ -51,7 +51,7 @@ class AnalyzerBase(metaclass=ABCMeta):
     def __init__(
         self,
         model: Model,
-        neuron_selection_mode: str = "max_activation",
+        neuron_selection_mode: str = "index",
         masks: list = None,
         disable_model_checks: bool = False,
         _model_check_done: bool = False,

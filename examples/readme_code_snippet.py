@@ -66,12 +66,12 @@ if __name__ == "__main__":
 
     # List all files in the folder
     # filenames = os.listdir(folder_path)
-    if len(sys.argv) < 2:
-        print("Usage: python my_program.py <image_path>")
-        sys.exit(1)
+    # if len(sys.argv) < 2:
+    #     print("Usage: python my_program.py <image_path>")
+    #     sys.exit(1)
 
-    image_path = sys.argv[1]
-    # image_path = "ILSVRC2012_val_00000001_gausian_big.JPEG"
+    # image_path = sys.argv[1]
+    image_path = "ILSVRC2012_val_00000001.JPEG"
     print(image_path)
 
     image_size = 224
@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
     # # distribute the relevance to the input layer
     start_time = time.time()
-    a = analyzer.analyze(x)
+    a = analyzer.analyze(x, the_label_index)
 
     norm_lrp = innvestigate.faithfulnessCheck.calculate_distance.l2_normalize(a)
 
@@ -143,12 +143,12 @@ if __name__ == "__main__":
     sorted_mask.append(np.ones_like(sorted_mask[0]))
     sorted_masks_3D.append(np.ones_like(sorted_masks_3D[0]))
 
-    analyzer = innvestigate.create_analyzer("reveal.alpha_2_beta_1", model, **{"masks": sorted_masks_3D})
+    analyzer = innvestigate.create_analyzer("reveal.alpha_2_beta_1", model, **{"masks": sorted_masks_3D, "index": the_label_index})
 
 
     # # # Apply analyzer w.r.t. maximum activated output-neuron
     start_time = time.time()
-    relevance = analyzer.analyze(x)
+    relevance = analyzer.analyze(x, label=the_label_index)
     print("--- %s minutes ---" % ((time.time() - start_time) / 60))
 
     masks_times_relevance = sorted_masks_3D * relevance[:, np.newaxis, np.newaxis, np.newaxis, np.newaxis]
@@ -162,7 +162,7 @@ if __name__ == "__main__":
         # illustrate.mask_to_input_relevance_of_pixels([random.randint(0, 100) for _ in range(len(masks_pixels)+2)], masks_from_heatmap3D_pixels, label = predictions[0][0][1], image_name= image_path)
 
 
-    return [sorted_mask, sorted_masks_3D, norm_lrp, norm_reveal, the_label_index]
+    print(sorted_mask, sorted_masks_3D, norm_lrp, norm_reveal, the_label_index)
 
     # innvestigate.faithfulnessCheck.calculate_distance.append_results('input_invaraince_explanation_method_comparison_eucliden.csv', results_euc)
          

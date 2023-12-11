@@ -1021,6 +1021,7 @@ def reverse_model(
     reapply_on_copied_layers: bool = False,
     forward_contibution: bool = False,
     random_masks: list = None,
+    index: list = None,
 ) -> tuple[list[Tensor], dict[Tensor, ReverseTensorDict] | None]:
     """
     Reverses a Keras model based on the given reverse functions.
@@ -1336,6 +1337,9 @@ def reverse_model(
                     id(Y) for Y in Ys if id(Y) in stop_mapping_at_ids
                 ]
 
+                if _nid == 22:
+                    print("here")
+
                 print(f"[NID: {_nid}] Reverse layer-node {layer}")
                 reverse_mapping = initialized_reverse_mappings[layer]
                 percentage_change = [get_percent_tensor(xs)
@@ -1351,6 +1355,7 @@ def reverse_model(
                         "layer": layer,
                         "stop_mapping_at_ids": local_stop_mapping_at_ids,
                         "masks_size": masks_size,
+                        "index": index,
                         # "percentage_change": percentage_change,
                     },
                 )

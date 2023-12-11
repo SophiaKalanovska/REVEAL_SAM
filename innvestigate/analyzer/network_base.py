@@ -238,6 +238,7 @@ class AnalyzerNetworkBase(AnalyzerBase):
         self,
         X: OptionalList[np.ndarray],
         neuron_selection: OptionalList[int] | None = None,
+        label = None,
     ) -> OptionalList[np.ndarray]:
         """
         Same interface as :class:`Analyzer` besides
@@ -247,6 +248,9 @@ class AnalyzerNetworkBase(AnalyzerBase):
         When analyzing batches, this should be a List of integer indices.
         """
         # TODO: what does should mean in docstring?
+
+        if label != None:
+            self._neuron_selection_mode = "max_activation"
 
         if self._analyzer_model_done is False:
             self.create_analyzer_model()
@@ -275,7 +279,9 @@ class AnalyzerNetworkBase(AnalyzerBase):
         else:
             ret = self._analyzer_model.predict_on_batch(X)
         if self._n_debug_output > 0:
-            self._handle_debug_output(ret[-self._n_debug_output:])
+            if label != None:
+                ret = ret[: -(self._n_debug_output-1)]
+            # self._handle_debug_output(ret[-self._n_debug_output:])
             ret = ret[: -self._n_debug_output]
 
         return ibackend.unpack_singleton(ret)

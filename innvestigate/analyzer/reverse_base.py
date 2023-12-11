@@ -120,7 +120,12 @@ class ReverseAnalyzerBase(AnalyzerNetworkBase):
     ):
         """Returns masked gradient."""
         if self.masks is not None:
-            grad = ilayers.Gradient()([Ys, Xs])
+            # grad = ilayers.Gradient()([Ys, Xs])
+            new_tensor = tf.zeros_like(Ys)
+            updates = [1]
+            grad = tf.tensor_scatter_nd_update(new_tensor, reverse_state["index"], updates)
+
+
             max_activ = [ilayers.Multiply()([a, b]) for a,b in zip(grad, reversed_Ys)]
             abs_max_activ = [ilayers.Absolut()(max_activ)]
 
@@ -253,6 +258,7 @@ class ReverseAnalyzerBase(AnalyzerNetworkBase):
         return_all_reversed_tensors=False,
         forward_contibution = False,
         random_masks = None,
+        index = None,
     ) -> tuple[list[Tensor], dict[Tensor, ReverseTensorDict] | None]:
         if stop_analysis_at_tensors is None:
             stop_analysis_at_tensors = []
@@ -269,10 +275,11 @@ class ReverseAnalyzerBase(AnalyzerNetworkBase):
             return_all_reversed_tensors=return_all_reversed_tensors,
             forward_contibution= forward_contibution,
             random_masks = random_masks,
+            index = index,
         )
 
     def _create_analysis(
-        self, model: Model, stop_analysis_at_tensors: list[Tensor] = None, forward_contibution:bool = False, random_masks: list = None
+        self, model: Model, stop_analysis_at_tensors: list[Tensor] = None, forward_contibution:bool = False, random_masks: list = None, index: list = None
     ):
 
         if stop_analysis_at_tensors is None:
@@ -295,7 +302,8 @@ class ReverseAnalyzerBase(AnalyzerNetworkBase):
             stop_analysis_at_tensors=stop_analysis_at_tensors,
             return_all_reversed_tensors=return_all_reversed_tensors,
             forward_contibution= forward_contibution,
-            random_masks = random_masks
+            random_masks = random_masks,
+            index = index
         )
         ret = self._postprocess_analysis(reversed_input_tensors)
 

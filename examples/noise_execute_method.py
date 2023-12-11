@@ -73,10 +73,11 @@ if __name__ == "__main__":
     image_path = sys.argv[1]
     sorted_mask = sys.argv[2]
     sorted_masks_3D = sys.argv[3]
-    a = sys.argv[4]
-    exp = sys.argv[5]
+    norm_lrp= sys.argv[4]
+    norm_reveal = sys.argv[5]
     the_label_index = sys.argv[6]
     image_folder = sys.argv[7]
+    noise_type = sys.argv[8]
 
     # image_path = "ILSVRC2012_val_00000001_gausian_big.JPEG"
     print(image_path)
@@ -104,13 +105,14 @@ if __name__ == "__main__":
     x = preprocess(image[None])
 
     analyzer = innvestigate.create_analyzer("lrp.alpha_1_beta_0", model)
-    pr = model.predict_on_batch(x)
-    the_label_index = np.argmax(pr, axis=1)
-    predictions = model_call.decode_predictions(pr)
+    pr_2 = model.predict_on_batch(x)
+    the_label_index_2 = np.argmax(pr, axis=1)
+    predictions_2 = model_call.decode_predictions(pr)
+    print(the_label_index_2)
 
     # # distribute the relevance to the input layer
     start_time = time.time()
-    a = analyzer.analyze(x)
+    a = analyzer.analyze(x, the_label_index)
 
     norm_lrp_2 = innvestigate.faithfulnessCheck.calculate_distance.l2_normalize(a)
 
@@ -134,11 +136,25 @@ if __name__ == "__main__":
         # illustrate.mask_to_input_relevance_of_pixels([random.randint(0, 100) for _ in range(len(masks_pixels)+2)], masks_from_heatmap3D_pixels, label = predictions[0][0][1], image_name= image_path)
     
     
+    
+    Reveal_cosine = innvestigate.faithfulnessCheck.calculate_distance.calculate_cosine_similarity(norm_reveal.flatten(), norm_reveal_2.flatten())
+    Reveal_euclidean = innvestigate.faithfulnessCheck.calculate_distance.calculate_euclidean_distance(norm_reveal.flatten(), norm_reveal_2.flatten())
+
+    LRP_cosine = innvestigate.faithfulnessCheck.calculate_distance.calculate_cosine_similarity(norm_lrp.flatten(), norm_lrp_2.flatten())
+    LRP_euclidean = innvestigate.faithfulnessCheck.calculate_distance.calculate_euclidean_distance(norm_lrp.flatten(), norm_lrp.flatten())
+
+    change = the_label_index_2 == the_label_index
+    print(change)
+
+
     name, extension = image_path.rsplit('.', 1)
    
     results = {
-    f"REVEAL_{name}": norm_reveal.flatten(),
-    f"LRP_{name}": norm_lrp.flatten()
+     f"REVEAL_{noise_type}_cosine": Reveal_cosine,
+     f"REVEAL_{noise_type}_euclidean": Reveal_euclidean,
+     f"LRP_{noise_type}_cosine": LRP_cosine,
+     f"LRP_{noise_type}_euclidean": LRP_euclidean,
+     f"Classification_change": change,
     }
 
     innvestigate.faithfulnessCheck.calculate_distance.append_results('results.csv', results)
