@@ -3,7 +3,7 @@ import cv2
 from PIL import Image
 import numpy as np
 
-def add_gaussian_noise(image, mean=0, sigma=0.1):
+def add_gaussian_noise(image, mean=0, sigma=0.01):
     """
     Adds Gaussian noise to an image.
 
@@ -20,7 +20,7 @@ def add_gaussian_noise(image, mean=0, sigma=0.1):
 
 
 
-def gaussian_blur(image, kernel_size=(5, 5)):
+def gaussian_blur(image, kernel_size=(3, 3)):
     """
     Applies Gaussian blur to an image.
 

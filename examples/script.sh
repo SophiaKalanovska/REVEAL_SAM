@@ -10,8 +10,11 @@ for image_file in $IMAGE_DIR/*; do
     echo "Processing $image_file"
     if [[ -f "$image_file" ]]; then
         novel_part=${image_file#$IMAGE_DIR/}
+
+        # rm examples/temp_results.json
         
         echo "Processing $novel_part"
+
         returns=$(poetry run python3 examples/readme_code_snippet.py "$novel_part")
 
         # "$novel_part" + novel_part_gausian_big
@@ -25,15 +28,22 @@ for image_file in $IMAGE_DIR/*; do
         echo "Processing $blur"
         poetry run python3 examples/noise_execute_method.py "$blur" "ILSVRC_blur" "_blur"
 
+        small="${name_before_dot}_gausian_small.${name_after_dot}"
+        echo "Processing $small"
+        poetry run python3 examples/noise_execute_method.py "$small" "ILSVRC_small" "_gausian_small"
 
         big="${name_before_dot}_gausian_big.${name_after_dot}"
         echo "Processing $big"
         poetry run python3 examples/noise_execute_method.py "$big" "ILSVRC_big" "_gausian_big"
 
 
-        small="${name_before_dot}_gausian_small.${name_after_dot}"
-        echo "Processing $small"
-        poetry run python3 examples/noise_execute_method.py "$small" "ILSVRC_small" "_gausian_small"
-        rm temp_returns.json
+        # big="${name_before_dot}_gausian_big.${name_after_dot}"
+        # echo "Processing $big"
+        # poetry run python3 examples/noise_execute_method.py "$big" "ILSVRC_big_normal" "_gausian_big"
+
+
+        rm examples/temp_results.json
+
+
     fi
 done
