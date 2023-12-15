@@ -182,7 +182,7 @@ class Illustrate:
         l = ax.legend(custom_lines, relevances_sorted, title="Relevance of label \n " + label + "\n out of " + r"$\bf{" "%.3f" % full_relevance + "}$" "\n",
             loc='center left', bbox_to_anchor=(0.3, 0.5), fancybox=True, shadow=True, fontsize=11,
             title_fontsize=11, alignment="center")
-        plt.savefig("vgg16_v3/" + image_path + ".png")
+        plt.savefig("vgg19/" + image_path + ".png")
         plt.setp(l.get_title(), multialignment='center')
         # plt.show()
 

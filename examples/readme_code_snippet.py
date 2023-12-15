@@ -125,14 +125,14 @@ if __name__ == "__main__":
     mask_annotator = sv.MaskAnnotator()
     detections = sv.Detections.from_sam(result)
 
-    model_call = vgg16
-    # model_call = vgg19
+    # model_call = vgg16
+    model_call = vgg19
     # model_call = inception
     # model_call = res
 
-    model, preprocess = vgg16.VGG16(), vgg16.preprocess_input
+    # model, preprocess = vgg16.VGG16(), vgg16.preprocess_input
     # model, preprocess = res.ResNet50(), res.preprocess_input
-    # model, preprocess = vgg19.VGG19(), vgg19.preprocess_input
+    model, preprocess = vgg19.VGG19(), vgg19.preprocess_input
     # model, preprocess = inception.InceptionV3(), inception.preprocess_input
 
     # Strip softmax layerexamples
